@@ -340,7 +340,8 @@ class BaseModel(object):
         num_gpus=hparams.num_gpus,
         mode=self.mode,
         base_gpu=base_gpu,
-        single_cell_fn=self.single_cell_fn)
+        single_cell_fn=self.single_cell_fn, 
+        custom_cell=hparams.custom_cell)
 
   def _get_infer_maximum_iterations(self, hparams, source_sequence_length):
     """Maximum decoding steps at inference time."""
@@ -665,7 +666,8 @@ class Model(BaseModel):
         dropout=hparams.dropout,
         num_gpus=self.num_gpus,
         mode=self.mode,
-        single_cell_fn=self.single_cell_fn)
+        single_cell_fn=self.single_cell_fn, 
+        custom_cell=hparams.custom_cell)
 
     # For beam search, we need to replicate encoder infos beam_width times
     if self.mode == tf.contrib.learn.ModeKeys.INFER and hparams.beam_width > 0:

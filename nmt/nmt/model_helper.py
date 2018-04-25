@@ -348,7 +348,7 @@ def create_emb_for_encoder_and_decoder(share_vocab,
 
 
 def _single_cell(unit_type, num_units, forget_bias, dropout, mode,
-                 residual_connection=False, device_str=None, residual_fn=None):
+                 residual_connection=False, device_str=None, residual_fn=None, custom_cell=None):
   """Create an instance of a single RNN cell."""
   # dropout (= 1 - keep_prob) is set to 0 during eval and infer
   dropout = dropout if mode == tf.contrib.learn.ModeKeys.TRAIN else 0.0
@@ -372,6 +372,11 @@ def _single_cell(unit_type, num_units, forget_bias, dropout, mode,
   elif unit_type == "nas":
     utils.print_out("  NASCell", new_line=False)
     single_cell = tf.contrib.rnn.NASCell(num_units)
+  elif unit_type == "custom":
+    utils.print_out("  Custom cell type", new_line=False)
+    single_cell = custom_cell(
+        num_units,
+        forget_bias=forget_bias)
   else:
     raise ValueError("Unknown unit type %s!" % unit_type)
 
@@ -399,7 +404,7 @@ def _single_cell(unit_type, num_units, forget_bias, dropout, mode,
 
 def _cell_list(unit_type, num_units, num_layers, num_residual_layers,
                forget_bias, dropout, mode, num_gpus, base_gpu=0,
-               single_cell_fn=None, residual_fn=None):
+               single_cell_fn=None, residual_fn=None, custom_cell=None):
   """Create a list of RNN cells."""
   if not single_cell_fn:
     single_cell_fn = _single_cell
@@ -416,7 +421,8 @@ def _cell_list(unit_type, num_units, num_layers, num_residual_layers,
         mode=mode,
         residual_connection=(i >= num_layers - num_residual_layers),
         device_str=get_device_str(i + base_gpu, num_gpus),
-        residual_fn=residual_fn
+        residual_fn=residual_fn,
+        custom_cell=custom_cell
     )
     utils.print_out("")
     cell_list.append(single_cell)
@@ -426,7 +432,7 @@ def _cell_list(unit_type, num_units, num_layers, num_residual_layers,
 
 def create_rnn_cell(unit_type, num_units, num_layers, num_residual_layers,
                     forget_bias, dropout, mode, num_gpus, base_gpu=0,
-                    single_cell_fn=None):
+                    single_cell_fn=None, custom_cell=None):
   """Create multi-layer RNN cell.
 
   Args:
@@ -459,7 +465,8 @@ def create_rnn_cell(unit_type, num_units, num_layers, num_residual_layers,
                          mode=mode,
                          num_gpus=num_gpus,
                          base_gpu=base_gpu,
-                         single_cell_fn=single_cell_fn)
+                         single_cell_fn=single_cell_fn,
+                         custom_cell=custom_cell)
 
   if len(cell_list) == 1:  # Single layer.
     return cell_list[0]
