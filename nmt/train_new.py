@@ -26,16 +26,58 @@ class PrintLSTMCell(BasicLSTMCell):
 L = 2
 
 class SkipLSTMCell(BasicLSTMCell):
+    """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
 
-    def __init__(self, num_units, **kwargs):
+    def __init__(self, num_units, n_skip=20, **kwargs):
         super(SkipLSTMCell, self).__init__(num_units, **kwargs)
+        self._n_skip = n_skip
 
     def call(self, inputs, state):
-        x = [tf.constant(["Running a SkipLSTMCell"])]
+        """Run this multi-layer cell on inputs, starting from state.
+        inputs: [B, I + sum(ha_l)]
+        state: a list of [c_{t-1}, h_{t-1}, h_skip, h_cnt]
+        """
 
-        outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
+        x = [tf.constant(["Running a SkipLSTMCell"])]
+        skip_bool = h_cnt % self._n_skip == 0
+
+        
+        sigmoid = math_ops.sigmoid
+
+        one = constant_op.constant(1, dtype=dtypes.int32)
+        # Parameters of gates are concatenated into one multiply for efficiency.
+        # if self._state_is_tuple:
+        c, h, h_skip, h_cnt = state
+        # else:
+        #   c, h = array_ops.split(value=state, num_or_size_splits=2, axis=one)
+
+        gate_inputs = math_ops.matmul(
+            array_ops.concat([inputs, h], 1), self._kernel)
+        gate_inputs = nn_ops.bias_add(gate_inputs, self._bias)
+
+        # i = input_gate, j = new_input, f = forget_gate, o = output_gate
+        i, j, f, o = array_ops.split(
+            value=gate_inputs, num_or_size_splits=4, axis=one)
+
+        forget_bias_tensor = constant_op.constant(self._forget_bias, dtype=f.dtype)
+        # Note that using `add` and `multiply` instead of `+` and `*` gives a
+        # performance improvement. So using those at the cost of readability.
+        add = math_ops.add
+        multiply = math_ops.multiply
+        new_c = add(multiply(c, sigmoid(add(f, forget_bias_tensor))),
+                    multiply(sigmoid(i), self._activation(j)))
+
+        new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * self._alpha * h_skip
+
+        h_skip = h_skip * (1-skip_flag) + h * skip_bool
+        h_cnt += 1
+
+        new_state = [new_h, new_c, h_skip, h_cnt]
+
+
+        # outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
         print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
-        return outputs, print_output
+        return new_state, print_output
 
 out_dir = os.path.join('datasets', 'nmt_data_vi')
 site_prefix = "https://nlp.stanford.edu/projects/nmt/data/"
