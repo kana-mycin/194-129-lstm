@@ -41,7 +41,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
     
 
-    def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=20, **kwargs):
+    def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=3, **kwargs):
         super(SkipLSTMCell, self).__init__(_reuse=reuse)
         self._n_skip = n_skip
         self._num_units = num_units
@@ -81,26 +81,30 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
             value=gate_inputs, num_or_size_splits=4, axis=one)
 
         forget_bias_tensor = constant_op.constant(self._forget_bias, dtype=f.dtype)
+
         # Note that using `add` and `multiply` instead of `+` and `*` gives a
         # performance improvement. So using those at the cost of readability.
         add = math_ops.add
         multiply = math_ops.multiply
 
+        # c: [B, num_units]
+        # f: [B, num_units/4]
+
         first = multiply(c, sigmoid(add(f, forget_bias_tensor)))
         new_c = add(multiply(c, sigmoid(add(f, forget_bias_tensor))),
                     multiply(sigmoid(i), self._activation(j)))
 
-        new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * self._alpha * h_skip
+        new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * 1 * h_skip
 
-        h_skip = h_skip * (1-skip_flag) + h * skip_bool
+        h_skip = h_skip * (1-skip_bool) + h * skip_bool
         h_cnt += 1
 
         new_state = [new_h, new_c, h_skip, h_cnt]
 
 
         # outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
-        print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
-        return new_state, print_output
+        # print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
+        return new_h, new_state
     @property
     def output_size(self):
         # outputs h and z
@@ -124,10 +128,10 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         input_depth = inputs_shape[1].value
         self._kernel = self.add_variable(
             _WEIGHTS_VARIABLE_NAME,
-            shape=[input_depth + self._num_units, self._num_units])
+            shape=[input_depth + self._num_units, 4 * self._num_units])
         self._bias = self.add_variable(
             _BIAS_VARIABLE_NAME,
-            shape=[self._num_units],
+            shape=[4 * self._num_units],
             initializer=init_ops.zeros_initializer(dtype=self.dtype))
 
         self.built = True
