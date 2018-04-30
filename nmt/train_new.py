@@ -97,7 +97,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
                     multiply(sigmoid(i), self._activation(j)))
         if n_skip:
             new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * 1 * h_skip
-            h_skip = h_skip * (1-skip_bool) + h * skip_bool
+            h_skip = h_skip * (1-skip_bool) + new_h * skip_bool
         else:
             new_h = multiply(self._activation(new_c), sigmoid(o)) 
             h_skip = new_h 
