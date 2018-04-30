@@ -35,6 +35,8 @@ class PrintLSTMCell(BasicLSTMCell):
 
 # An LSTMCell class that provies L-length skip connections
 
+L = 2
+
 class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
     
@@ -95,7 +97,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
                     multiply(sigmoid(i), self._activation(j)))
         if n_skip:
             new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * 1 * h_skip
-            h_skip = h_skip * (1-skip_bool) + h * skip_bool
+            h_skip = h_skip * (1-skip_bool) + new_h * skip_bool
         else:
             new_h = multiply(self._activation(new_c), sigmoid(o)) 
             h_skip = new_h 
@@ -140,114 +142,20 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         self.built = True
 
 
-
-class MultiSkipLSTMCell(rnn_cell_impl.RNNCell):
-    """MultiSkipLSTM cell composed squentially of individual SkipLSTM cells 
-    Based off of https://github.com/n-s-f/hierarchical-rnn/blob/master/hmlstm/multi_hmlstm_cell.py"""
-    
-
-    def __init__(self, cells, reuse):
-        super(MultiSkipLSTMCell, self).__init__(_reuse=reuse)
-        self._cells = cells
-
-    def zero_state(self, batch_size, dtype):
-        return [cell.zero_state(batch_size, dtype) for cell in self._cells]
-
-    @property
-    def state_size(self):
-        return tuple(cell.state_size for cell in self._cells)
-
-    @property
-    def output_size(self):
-        return self._cells[-1].output_size
-
-
-    def call(self, inputs, state):
-        """Run this multi-layer cell on inputs, starting from state.
-        inputs: [B, I + sum(ha_l)]
-        state: a list of [c_{t-1}, h_{t-1}, h_skip, h_cnt]
-        """
-
-        total_hidden_size = sum(c._h_above_size for c in self._cells)
-
-        # split out the part of the input that stores values of ha
-        raw_inp = inputs[:, :-total_hidden_size]                # [B, I]
-        raw_h_aboves = inputs[:, -total_hidden_size:]           # [B, sum(ha_l)]
-
-        ha_splits = [c._h_above_size for c in self._cells]
-        h_aboves = array_ops.split(value=raw_h_aboves,
-                                   num_or_size_splits=ha_splits, axis=1)
-
-        z_below = tf.ones([tf.shape(inputs)[0], 1])             # [B, 1]
-        raw_inp = array_ops.concat([raw_inp, z_below], axis=1)  # [B, I + 1]
-
-        new_states = [0] * len(self._cells)
-        for i, cell in enumerate(self._cells):
-            with vs.variable_scope("cell_%d" % i):
-                cur_state = state[i]    # ([B, h_l], [B, h_l], [B, 1])
-                # i == 0: [B, I + 1] + [B, ha_l] -> [B, I + 1 + ha_l]
-                # i != 0: [B, hb_l + 1] + [B, ha_l] -> [B, hb_l + 1 + ha_l]
-                cur_inp = array_ops.concat(
-                    [raw_inp, h_aboves[i]], axis=1, name='input_to_cell')
-
-                raw_inp, new_state = cell(cur_inp, cur_state)
-                new_states[i] = new_state
-
-        hidden_states = [ns.h for ns in new_states]
-        return hidden_states, new_states
-
-
-        # outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
-        # print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
-        return new_h, new_state
-    @property
-    def output_size(self):
-        # outputs h and z
-        return self._num_units
-
-    @property
-    def state_size(self):
-        # the state is c, h, h_skip, h_cnt
-        return (self._num_units, self._num_units, self._num_units, 1)
-
-    def zero_state(self, batch_size, dtype):
-        c = tf.zeros([batch_size, self._num_units])
-        h = tf.zeros([batch_size, self._num_units])
-        return [h, c, h, 0]
-
-    def build(self, inputs_shape):
-        if inputs_shape[1].value is None:
-          raise ValueError("Expected inputs.shape[-1] to be known, saw shape: %s"
-                           % inputs_shape)
-
-        input_depth = inputs_shape[1].value
-        self._kernel = self.add_variable(
-            _WEIGHTS_VARIABLE_NAME,
-            shape=[input_depth + self._num_units, 4 * self._num_units])
-        self._bias = self.add_variable(
-            _BIAS_VARIABLE_NAME,
-            shape=[4 * self._num_units],
-            initializer=init_ops.zeros_initializer(dtype=self.dtype))
-
-        self.built = True
-
-
-
-
 out_dir = os.path.join('datasets', 'nmt_data_vi')
 site_prefix = "https://nlp.stanford.edu/projects/nmt/data/"
 
-maybe_download(site_prefix + 'iwslt15.en-vi/train.en', out_dir, 13603614)
-maybe_download(site_prefix + 'iwslt15.en-vi/train.vi', out_dir, 18074646)
+# maybe_download(site_prefix + 'iwslt15.en-vi/train.en', out_dir, 13603614)
+# maybe_download(site_prefix + 'iwslt15.en-vi/train.vi', out_dir, 18074646)
 
-maybe_download(site_prefix + 'iwslt15.en-vi/tst2012.en', out_dir, 140250)
-maybe_download(site_prefix + 'iwslt15.en-vi/tst2012.vi', out_dir, 188396)
+# maybe_download(site_prefix + 'iwslt15.en-vi/tst2012.en', out_dir, 140250)
+# maybe_download(site_prefix + 'iwslt15.en-vi/tst2012.vi', out_dir, 188396)
 
-maybe_download(site_prefix + 'iwslt15.en-vi/tst2013.en', out_dir, 132264)
-maybe_download(site_prefix + 'iwslt15.en-vi/tst2013.vi', out_dir, 183855)
+# maybe_download(site_prefix + 'iwslt15.en-vi/tst2013.en', out_dir, 132264)
+# maybe_download(site_prefix + 'iwslt15.en-vi/tst2013.vi', out_dir, 183855)
 
-maybe_download(site_prefix + 'iwslt15.en-vi/vocab.en', out_dir, 139741)
-maybe_download(site_prefix + 'iwslt15.en-vi/vocab.vi', out_dir, 46767)
+# maybe_download(site_prefix + 'iwslt15.en-vi/vocab.en', out_dir, 139741)
+# maybe_download(site_prefix + 'iwslt15.en-vi/vocab.vi', out_dir, 46767)
 
 def create_standard_hparams(data_path, out_dir):
     
