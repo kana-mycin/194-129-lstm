@@ -41,7 +41,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
     
 
-    def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=3, **kwargs):
+    def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=None, **kwargs):
         super(SkipLSTMCell, self).__init__(_reuse=reuse)
         self._n_skip = n_skip
         self._num_units = num_units
@@ -67,7 +67,9 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         # Parameters of gates are concatenated into one multiply for efficiency.
         # if self._state_is_tuple:
         c, h, h_skip, h_cnt = state
-        skip_bool = h_cnt % self._n_skip == 0
+        n_skip = self._n_skip
+        if n_skip:
+            skip_bool = h_cnt % self._n_skip == 0
 
         # else:
         #   c, h = array_ops.split(value=state, num_or_size_splits=2, axis=one)
@@ -93,10 +95,13 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         first = multiply(c, sigmoid(add(f, forget_bias_tensor)))
         new_c = add(multiply(c, sigmoid(add(f, forget_bias_tensor))),
                     multiply(sigmoid(i), self._activation(j)))
+        if n_skip:
+            new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * 1 * h_skip
+            h_skip = h_skip * (1-skip_bool) + h * skip_bool
+        else:
+            new_h = multiply(self._activation(new_c), sigmoid(o)) 
+            h_skip = new_h 
 
-        new_h = multiply(self._activation(new_c), sigmoid(o)) + skip_bool * 1 * h_skip
-
-        h_skip = h_skip * (1-skip_bool) + h * skip_bool
         h_cnt += 1
 
         new_state = [new_h, new_c, h_skip, h_cnt]
