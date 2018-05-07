@@ -61,18 +61,18 @@ def estimator_spec_for_softmax_classification(logits, labels, mode):
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 
-def bag_of_words_model(features, labels, mode):
-  """A bag-of-words model. Note it disregards the word order in the text."""
-  bow_column = tf.feature_column.categorical_column_with_identity(
-      WORDS_FEATURE, num_buckets=n_words)
-  bow_embedding_column = tf.feature_column.embedding_column(
-      bow_column, dimension=EMBEDDING_SIZE)
-  bow = tf.feature_column.input_layer(
-      features, feature_columns=[bow_embedding_column])
-  logits = tf.layers.dense(bow, MAX_LABEL, activation=None)
+# def bag_of_words_model(features, labels, mode):
+#   """A bag-of-words model. Note it disregards the word order in the text."""
+#   bow_column = tf.feature_column.categorical_column_with_identity(
+#       WORDS_FEATURE, num_buckets=n_words)
+#   bow_embedding_column = tf.feature_column.embedding_column(
+#       bow_column, dimension=EMBEDDING_SIZE)
+#   bow = tf.feature_column.input_layer(
+#       features, feature_columns=[bow_embedding_column])
+#   logits = tf.layers.dense(bow, MAX_LABEL, activation=None)
 
-  return estimator_spec_for_softmax_classification(
-      logits=logits, labels=labels, mode=mode)
+#   return estimator_spec_for_softmax_classification(
+#       logits=logits, labels=labels, mode=mode)
 
 
 def rnn_model(features, labels, mode):
@@ -82,7 +82,7 @@ def rnn_model(features, labels, mode):
   # maps word indexes of the sequence into [batch_size, sequence_length,
   # EMBEDDING_SIZE].
   word_vectors = tf.contrib.layers.embed_sequence(
-      features[WORDS_FEATURE], vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
+      features, vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
 
   # Split into list of embedding per word, while removing doc length dim.
   # word_list results to be a list of tensors [batch_size, EMBEDDING_SIZE].
@@ -130,34 +130,52 @@ def main(unused_argv):
   # n_words = len(vocab_processor.vocabulary_)
   # print('Total words: %d' % n_words)
 
+  # TODO: Set n_words to be equal to the vocab size
   train, val, test = data_utils.load_data("20NG/20news.pkl")
+
+  def gen_train():
+    for data, label in zip(train):
+      yield (data,label)
+
+  def gen_test():
+    for data, label in zip(test):
+      yield (data,label)
 
   # Build model
   # Switch between rnn_model and bag_of_words_model to test different models.
   model_fn = rnn_model
-  if FLAGS.bow_model:
-    print("using bow\n\n")
-    # Subtract 1 because VocabularyProcessor outputs a word-id matrix where word
-    # ids start from 1 and 0 means 'no word'. But
-    # categorical_column_with_identity assumes 0-based count and uses -1 for
-    # missing word.
-    x_train -= 1
-    x_test -= 1
-    model_fn = bag_of_words_model
+  # if FLAGS.bow_model:
+  #   print("using bow\n\n")
+  #   # Subtract 1 because VocabularyProcessor outputs a word-id matrix where word
+  #   # ids start from 1 and 0 means 'no word'. But
+  #   # categorical_column_with_identity assumes 0-based count and uses -1 for
+  #   # missing word.
+  #   x_train -= 1
+  #   x_test -= 1
+  #   model_fn = bag_of_words_model
   classifier = tf.estimator.Estimator(model_fn=model_fn)
 
-  # Train.
-  train_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={WORDS_FEATURE: x_train},
-      y=y_train,
-      batch_size=len(x_train),
-      num_epochs=None,
-      shuffle=True)
+  # # Train.
+  # train_input_fn = tf.estimator.inputs.numpy_input_fn(
+  #     x={WORDS_FEATURE: x_train},
+  #     y=y_train,
+  #     batch_size=len(x_train),
+  #     num_epochs=None,
+  #     shuffle=True)
+  def train_input_fn():
+    ds_train = tf.data.Dataset.from_generator(gen_train, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
+    ds = ds_train.shuffle(len(train[0])).repeat().batch(64)
+    return ds
+
+  def test_input_fn():
+    ds_test = tf.data.Dataset.from_generator(gen_test, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
+    return ds_test 
+
   classifier.train(input_fn=train_input_fn, steps=300)
 
-  # Predict.
-  test_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={WORDS_FEATURE: x_test}, y=y_test, num_epochs=1, shuffle=False)
+  # # Predict.
+  # test_input_fn = tf.estimator.inputs.numpy_input_fn(
+  #     x={WORDS_FEATURE: x_test}, y=y_test, num_epochs=1, shuffle=False)
   predictions = classifier.predict(input_fn=test_input_fn)
   y_predicted = np.array(list(p['class'] for p in predictions))
   y_predicted = y_predicted.reshape(np.array(y_test).shape)
