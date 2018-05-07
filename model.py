@@ -1,3 +1,27 @@
+import os
+
+import tensorflow as tf
+
+# Helper TensorFlow functions
+# from utils import maybe_download
+
+# The encoder-decoder architecture
+# from nmt.model import Model
+# from nmt.utils import vocab_utils
+# from nmt.train import train
+
+from tensorflow.contrib.rnn import BasicLSTMCell, LSTMStateTuple
+from tensorflow.python.ops import math_ops
+from tensorflow.python.framework import constant_op
+from tensorflow.python.framework import dtypes
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import rnn_cell_impl
+from tensorflow.python.ops import init_ops
+from tensorflow.python.ops import nn_ops
+
+
+
+
 class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
     
