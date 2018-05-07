@@ -6,7 +6,7 @@ __author__ = 'v-yirwan'
 import pickle as pkl
 import gzip
 import os
-import numpy
+import numpy as np
 
 # TODO: fix dataset importing
 
@@ -99,8 +99,8 @@ def load_data(data_path="20NG/20news.pkl", n_words=100000, maxlen=None,
         '''
         train_set_x, train_set_y = train_set
         n_samples = len(train_set_x)
-        sidx = numpy.random.permutation(n_samples) # shuffle data
-        n_train = int(numpy.round(n_samples * (1. - valid_portion)))
+        sidx = np.random.permutation(n_samples) # shuffle data
+        n_train = int(np.round(n_samples * (1. - valid_portion)))
         valid_set_x = [train_set_x[s] for s in sidx[n_train:]]
         valid_set_y = [train_set_y[s] for s in sidx[n_train:]]
         train_set_x = [train_set_x[s] for s in sidx[:n_train]]
@@ -180,7 +180,7 @@ def load_mnist(path='mnist.pkl', fixed_permute=True, rand_permute=False):
 
     if rand_permute:
         print('Using a fixed random permutation of pixels...'),
-        perm = numpy.random.permutation(range(784))
+        perm = np.random.permutation(range(784))
         train = _permute(train, perm)
         valid = _permute(valid, perm)
         test = _permute(test, perm)
@@ -198,10 +198,10 @@ def get_minibatches_idx(n, minibatch_size, shuffle=False):
     Used to shuffle the dataset at each iteration.
     """
 
-    idx_list = numpy.arange(n, dtype="int32")
+    idx_list = np.arange(n, dtype="int32")
 
     if shuffle:
-        numpy.random.shuffle(idx_list)
+        np.random.shuffle(idx_list)
 
     minibatches = []
     minibatch_start = 0
@@ -232,9 +232,9 @@ def get_minibatches_idx_bucket(dataset, minibatch_size, shuffle=False):
 
     # shuffle each bucket
     if shuffle:
-        numpy.random.shuffle(bucket1000)
-        numpy.random.shuffle(bucket3000)
-        numpy.random.shuffle(bucket_long)
+        np.random.shuffle(bucket1000)
+        np.random.shuffle(bucket3000)
+        np.random.shuffle(bucket_long)
 
     # make minibatches
     def _make_batch(minibatches, bucket, minibatch_size):
@@ -254,7 +254,7 @@ def get_minibatches_idx_bucket(dataset, minibatch_size, shuffle=False):
     _make_batch(minibatches, bucket_long, minibatch_size=minibatch_size//8)
 
     # shuffle minibatches
-    numpy.random.shuffle(minibatches)
+    np.random.shuffle(minibatches)
 
     return zip(range(len(minibatches)), minibatches)
 
@@ -289,13 +289,13 @@ def prepare_data(seqs, labels, maxlen=None, dataset='text'):
             return None, None, None
 
     n_samples = len(seqs)
-    maxlen = numpy.max(lengths)
+    maxlen = np.max(lengths)
 
     if dataset == 'mnist':
-        x = numpy.zeros((maxlen, n_samples)).astype('float32')
+        x = np.zeros((maxlen, n_samples)).astype('float32')
     else:
-        x = numpy.zeros((maxlen, n_samples)).astype('int64')
-    x_mask = numpy.zeros((maxlen, n_samples)).astype('float32')
+        x = np.zeros((maxlen, n_samples)).astype('int64')
+    x_mask = np.zeros((maxlen, n_samples)).astype('float32')
     for idx, s in enumerate(seqs):
         x[:lengths[idx], idx] = s
         x_mask[:lengths[idx], idx] = 1.
