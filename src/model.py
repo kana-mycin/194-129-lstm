@@ -2,6 +2,8 @@ import os
 
 import tensorflow as tf
 
+import collections
+
 # Helper TensorFlow functions
 # from utils import maybe_download
 
@@ -19,7 +21,8 @@ from tensorflow.python.ops import rnn_cell_impl
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import nn_ops
 
-
+_BIAS_VARIABLE_NAME = "bias"
+_WEIGHTS_VARIABLE_NAME = "kernel"
 
 
 class SkipLSTMCell(rnn_cell_impl.RNNCell):
@@ -33,7 +36,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         self._forget_bias = forget_bias
         self._activation = activation or math_ops.tanh
         self._output_size = self._num_units + 1
-        self._state_size = (self._num_units, self._num_units, 1)
+        self._state_size = (self._num_units, self._num_units, self._num_units, 1)
 
 
 
@@ -89,11 +92,12 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
 
         h_cnt += 1
 
-        new_state = [new_h, new_c, h_skip, h_cnt]
+        new_state = SCLSTMStateTuple(new_h, new_c, h_skip, h_cnt)
 
 
         # outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
         # print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
+
         return new_h, new_state
     @property
     def output_size(self):
@@ -103,12 +107,12 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
     @property
     def state_size(self):
         # the state is c, h, h_skip, h_cnt
-        return (self._num_units, self._num_units, self._num_units, 1)
+        return SCLSTMStateTuple(self._num_units, self._num_units, self._num_units, 1)
 
     def zero_state(self, batch_size, dtype):
         c = tf.zeros([batch_size, self._num_units])
         h = tf.zeros([batch_size, self._num_units])
-        return [h, c, h, 0]
+        return SCLSTMStateTuple(h, c, h, 0)
 
     def build(self, inputs_shape):
         if inputs_shape[1].value is None:
@@ -125,4 +129,27 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
             initializer=init_ops.zeros_initializer(dtype=self.dtype))
 
         self.built = True
+
+
+_SCLSTMStateTuple = collections.namedtuple("LSTMStateTuple", ("h", "c", "s", "n"))
+class SCLSTMStateTuple(_SCLSTMStateTuple):
+  """Tuple used by LSTM Cells for `state_size`, `zero_state`, and output state.
+
+  Stores four elements: `(h, c, s, n)`, in that order. Where `h` is the hidden state
+  and `c` is the cell state and `s` is the skip hidden state and `n` is a count of hidden
+  states.
+
+  """
+  __slots__ = ()
+
+  @property
+  def dtype(self):
+    (h, c, s, n) = self
+    if c.dtype != h.dtype:
+      raise TypeError("Inconsistent internal state: %s vs %s" %
+                      (str(c.dtype), str(h.dtype)))
+    return c.dtype
+
+
+
 
