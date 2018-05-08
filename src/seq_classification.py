@@ -21,7 +21,7 @@ BATCH_SIZE = 8
 EMBEDDING_SIZE = 50
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
-
+OVERFIT_NUM = 50
 
 def estimator_spec_for_softmax_classification(logits, labels, mode):
   """Returns EstimatorSpec instance for softmax classification."""
@@ -123,6 +123,22 @@ def main(unused_argv):
   model_fn = rnn_model
   classifier = tf.estimator.Estimator(model_fn=model_fn)
 
+  def overfit_test_input_fn():
+    ds = tf.data.Dataset.from_generator(
+                    gen_train,
+                    (tf.int64, tf.int64),
+                    (tf.TensorShape([None]), tf.TensorShape([])))
+    ds = ds.take(OVERFIT_NUM).batch(1)
+    return ds
+
+  def overfit_train_input_fn():
+    ds = tf.data.Dataset.from_generator(
+                    gen_train,
+                    (tf.int64, tf.int64),
+                    (tf.TensorShape([None]), tf.TensorShape([])))
+    ds = ds.take(OVERFIT_NUM).repeat().batch(1)
+    return ds
+
   def train_input_fn():
     ds_train = tf.data.Dataset.from_generator(
                     gen_train,
@@ -143,10 +159,18 @@ def main(unused_argv):
     ds_test = ds_test.padded_batch(BATCH_SIZE, padded_shapes=(tf.TensorShape([None]), tf.TensorShape([])))
     return ds_test 
 
+  if FLAGS.overfit:
+    train_input_fn = overfit_train_input_fn
+    test_input_fn = overfit_test_input_fn
+
   classifier.train(input_fn=train_input_fn, steps=300)
 
   # # Predict.
-  x_test, y_test = test
+  if (FLAGS.overfit):
+    x_test = train[0][:OVERFIT_NUM]
+    y_test = train[1][:OVERFIT_NUM]
+  else:
+    x_test, y_test = test
   predictions = classifier.predict(input_fn=test_input_fn)
   y_predicted = np.array(list(p['class'] for p in predictions))
   y_predicted = y_predicted.reshape(np.array(y_test).shape)
@@ -162,6 +186,10 @@ def main(unused_argv):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-
+  parser.add_argument(
+      '--overfit',
+      default=False,
+      help='Overfit a small subset of the training data.',
+      action='store_true')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
