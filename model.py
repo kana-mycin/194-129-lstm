@@ -88,7 +88,6 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
             h_skip = new_h 
 
         h_cnt += 1
-
         new_state = [new_h, new_c, h_skip, h_cnt]
 
 
@@ -108,7 +107,10 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
     def zero_state(self, batch_size, dtype):
         c = tf.zeros([batch_size, self._num_units])
         h = tf.zeros([batch_size, self._num_units])
-        return [h, c, h, 0]
+        print(h.dtype)
+        print(c.dtype)
+        print(tf.Variable(0.0).dtype)
+        return [h, c, h, tf.Variable(0.0, dtype=tf.float32)]
 
     def build(self, inputs_shape):
         if inputs_shape[1].value is None:
