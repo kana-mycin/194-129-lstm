@@ -29,10 +29,11 @@ from utils import data_utils
 
 FLAGS = None
 
-MAX_DOCUMENT_LENGTH = 10
+# MAX_DOCUMENT_LENGTH = 10
+BATCH_SIZE = 8
 EMBEDDING_SIZE = 50
-n_words = 0
-MAX_LABEL = 15
+VOCAB_SIZE = 0
+NUM_CLASSES = 0
 WORDS_FEATURE = 'words'  # Name of the input words feature.
 
 
@@ -60,29 +61,34 @@ def estimator_spec_for_softmax_classification(logits, labels, mode):
   return tf.estimator.EstimatorSpec(
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
-
 # def bag_of_words_model(features, labels, mode):
 #   """A bag-of-words model. Note it disregards the word order in the text."""
 #   bow_column = tf.feature_column.categorical_column_with_identity(
-#       WORDS_FEATURE, num_buckets=n_words)
+#       WORDS_FEATURE, num_buckets=VOCAB_SIZE)
 #   bow_embedding_column = tf.feature_column.embedding_column(
 #       bow_column, dimension=EMBEDDING_SIZE)
 #   bow = tf.feature_column.input_layer(
 #       features, feature_columns=[bow_embedding_column])
-#   logits = tf.layers.dense(bow, MAX_LABEL, activation=None)
+#   logits = tf.layers.dense(bow, NUM_CLASSES, activation=None)
 
 #   return estimator_spec_for_softmax_classification(
 #       logits=logits, labels=labels, mode=mode)
 
-
 def rnn_model(features, labels, mode):
   """RNN model to predict from sequence of words to a class."""
+
+  def length(sequence):
+    used = tf.sign(tf.reduce_max(tf.abs(sequence), reduction_indices=2))
+    length = tf.reduce_sum(used, reduction_indices=1)
+    length = tf.cast(length, tf.int32)
+    return length
+
   # Convert indexes of words into embeddings.
-  # This creates embeddings matrix of [n_words, EMBEDDING_SIZE] and then
+  # This creates embeddings matrix of [VOCAB_SIZE, EMBEDDING_SIZE] and then
   # maps word indexes of the sequence into [batch_size, sequence_length,
   # EMBEDDING_SIZE].
   word_vectors = tf.contrib.layers.embed_sequence(
-      features, vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
+      features, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
 
   # Split into list of embedding per word, while removing doc length dim.
   # word_list results to be a list of tensors [batch_size, EMBEDDING_SIZE].
@@ -91,91 +97,84 @@ def rnn_model(features, labels, mode):
   # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
   cell = tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
 
-  # Create an unrolled Recurrent Neural Networks to length of
-  # MAX_DOCUMENT_LENGTH and passes word_list as inputs for each unit.
-
-  # _, encoding = tf.nn.static_rnn(cell, word_list, dtype=tf.float32)
-  _, encoding = tf.nn.dynamic_rnn(cell, word_vectors, dtype=tf.float32)
+  # Create a dynamic RNN and pass in a function to compute sequence lengths.
+  _, encoding = tf.nn.dynamic_rnn(
+                cell,
+                word_vectors,
+                dtype=tf.float32,
+                sequence_length=length(word_vectors))
 
   # Given encoding of RNN, take encoding of last step (e.g hidden size of the
   # neural network of last step) and pass it as features for softmax
   # classification over output classes.
-  logits = tf.layers.dense(encoding, MAX_LABEL, activation=None)
+  logits = tf.layers.dense(encoding, NUM_CLASSES, activation=None)
   return estimator_spec_for_softmax_classification(
       logits=logits, labels=labels, mode=mode)
 
+# Given a list of sentences that form the dataset, return the vocab size
+def get_vocab_size(data):
+  max_word_index = 0
+  for sen in data:
+      for word in sen:
+          max_word_index = max(max_word_index, word)
+  vocab_size = max_word_index + 1
+  return vocab_size
+
+def get_num_classes(labels):
+  max_label = 0
+  for label in labels:
+      max_label = max(max_label, label)
+  num_classes = max_label + 1
+  return num_classes
 
 def main(unused_argv):
-  global n_words
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  # # Prepare training and testing data
-  # dbpedia = tf.contrib.learn.datasets.load_dataset(
-  #     'dbpedia', test_with_fake_data=FLAGS.test_with_fake_data)
-  # x_train = pandas.Series(dbpedia.train.data[:, 1])
-  # y_train = pandas.Series(dbpedia.train.target)
-  # x_test = pandas.Series(dbpedia.test.data[:, 1])
-  # y_test = pandas.Series(dbpedia.test.target)
-
-  # # Process vocabulary
-  # vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
-  #     MAX_DOCUMENT_LENGTH)
-
-  # x_transform_train = vocab_processor.fit_transform(x_train)
-  # x_transform_test = vocab_processor.transform(x_test)
-
-  # x_train = np.array(list(x_transform_train))
-  # x_test = np.array(list(x_transform_test))
-
-  # n_words = len(vocab_processor.vocabulary_)
-  # print('Total words: %d' % n_words)
-
-  # TODO: Set n_words to be equal to the vocab size
+  # TODO: Set VOCAB_SIZE to be equal to the vocab size
   train, val, test = data_utils.load_data("20NG/20news.pkl")
+  global VOCAB_SIZE, NUM_CLASSES
+
+  x_train, y_train = train
+  VOCAB_SIZE = get_vocab_size(x_train)
+  NUM_CLASSES = get_num_classes(y_train)
+
+  print('Total words: %d' % VOCAB_SIZE)
+  print('Number of classes: %d' % NUM_CLASSES)
 
   def gen_train():
-    for data, label in zip(train):
+    for data, label in zip(*train):
       yield (data,label)
 
   def gen_test():
-    for data, label in zip(test):
+    for data, label in zip(*test):
       yield (data,label)
 
   # Build model
-  # Switch between rnn_model and bag_of_words_model to test different models.
   model_fn = rnn_model
-  # if FLAGS.bow_model:
-  #   print("using bow\n\n")
-  #   # Subtract 1 because VocabularyProcessor outputs a word-id matrix where word
-  #   # ids start from 1 and 0 means 'no word'. But
-  #   # categorical_column_with_identity assumes 0-based count and uses -1 for
-  #   # missing word.
-  #   x_train -= 1
-  #   x_test -= 1
-  #   model_fn = bag_of_words_model
   classifier = tf.estimator.Estimator(model_fn=model_fn)
 
-  # # Train.
-  # train_input_fn = tf.estimator.inputs.numpy_input_fn(
-  #     x={WORDS_FEATURE: x_train},
-  #     y=y_train,
-  #     batch_size=len(x_train),
-  #     num_epochs=None,
-  #     shuffle=True)
   def train_input_fn():
-    ds_train = tf.data.Dataset.from_generator(gen_train, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
-    ds = ds_train.shuffle(len(train[0])).repeat().batch(64)
+    ds_train = tf.data.Dataset.from_generator(
+                    gen_train,
+                    (tf.int64, tf.int64),
+                    (tf.TensorShape([None]), tf.TensorShape([])))
+    # For now, we use batch size 1 to avoid the variable length problem
+    # A solution is here: https://stackoverflow.com/questions/34670112/how-to-deal-with-batches-with-variable-length-sequences-in-tensorflow
+    ds = ds_train.shuffle(len(train[0])).repeat().batch(1)
     return ds
 
   def test_input_fn():
-    ds_test = tf.data.Dataset.from_generator(gen_test, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
+    ds_test = tf.data.Dataset.from_generator(
+                    gen_test,
+                    (tf.int64, tf.int64),
+                    (tf.TensorShape([None]), tf.TensorShape([])))
+    ds_test = ds_test.batch(1)
     return ds_test 
 
   classifier.train(input_fn=train_input_fn, steps=300)
 
   # # Predict.
-  # test_input_fn = tf.estimator.inputs.numpy_input_fn(
-  #     x={WORDS_FEATURE: x_test}, y=y_test, num_epochs=1, shuffle=False)
+  x_test, y_test = test
   predictions = classifier.predict(input_fn=test_input_fn)
   y_predicted = np.array(list(p['class'] for p in predictions))
   y_predicted = y_predicted.reshape(np.array(y_test).shape)
