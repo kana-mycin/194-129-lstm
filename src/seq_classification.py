@@ -15,10 +15,12 @@ import tensorflow as tf
 
 from utils import data_utils
 
+from model import SkipLSTMCell  
+
 FLAGS = None
 
-BATCH_SIZE = 8
-EMBEDDING_SIZE = 50
+BATCH_SIZE = 32
+EMBEDDING_SIZE = 256
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
 OVERFIT_NUM = 50
@@ -64,8 +66,9 @@ def rnn_model(features, labels, mode):
   word_vectors = tf.contrib.layers.embed_sequence(
       features, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
 
-  # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
+  # Create an LSTM cell with hidden size of EMBEDDING_SIZE.
   cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
+  # cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
 
   # Create a dynamic RNN and pass in a function to compute sequence lengths.
   _, state = tf.nn.dynamic_rnn(
@@ -74,7 +77,7 @@ def rnn_model(features, labels, mode):
                 dtype=tf.float32,
                 sequence_length=length(word_vectors))
 
-  encoding, memory = state
+  encoding = state[0]
 
   # Given encoding of RNN, take encoding of last step (e.g hidden size of the
   # neural network of last step) and pass it as features for softmax
@@ -102,17 +105,32 @@ def get_num_classes(labels):
 def main(unused_argv):
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  data_path = data_utils.get_data_path('PMNIST')
+  data_path = data_utils.get_data_path(FLAGS.dataset)
   print('Accessing training data at path:', data_path)
-  train, val, test = data_utils.load_data(data_path)
+  if (FLAGS.dataset == 'PMNIST'):
+    train, val, test = data_utils.load_mnist(data_path)
+  else:
+    train, val, test = data_utils.load_data(data_path)
   global VOCAB_SIZE, NUM_CLASSES
 
   x_train, y_train = train
   VOCAB_SIZE = get_vocab_size(x_train)
   NUM_CLASSES = get_num_classes(y_train)
 
-  print('Total words: %d' % VOCAB_SIZE)
-  print('Number of classes: %d' % NUM_CLASSES)
+  print()
+  print('DATASET PARAMS\n===============')
+  print('Dataset:', FLAGS.dataset)
+  print('Total words:', VOCAB_SIZE)
+  print('Number of classes:', NUM_CLASSES)
+  print()
+
+  print('TRAIN PARAMS\n===============')
+  print('Batch size:', BATCH_SIZE)
+  print('Embedding size:', EMBEDDING_SIZE)
+  print('Model directory:', FLAGS.model_dir)
+  print('Overfit sanity check:', FLAGS.overfit)
+  print('Steps to train:', FLAGS.steps)
+  print()
 
   def gen_train():
     for data, label in zip(*train):
@@ -124,7 +142,7 @@ def main(unused_argv):
 
   # Build model
   model_fn = rnn_model
-  classifier = tf.estimator.Estimator(model_fn=model_fn)
+  classifier = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.model_dir)
 
   def overfit_test_input_fn():
     ds = tf.data.Dataset.from_generator(
@@ -166,7 +184,7 @@ def main(unused_argv):
     train_input_fn = overfit_train_input_fn
     test_input_fn = overfit_test_input_fn
 
-  classifier.train(input_fn=train_input_fn, steps=300)
+  classifier.train(input_fn=train_input_fn, steps=10000)
 
   # # Predict.
   if (FLAGS.overfit):
@@ -190,9 +208,27 @@ def main(unused_argv):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
+      '-o',
       '--overfit',
       default=False,
       help='Overfit a small subset of the training data.',
       action='store_true')
+  parser.add_argument(
+      '-d',
+      '--dataset',
+      default='20NG',
+      help='Name of the dataset to use.')
+  parser.add_argument(
+      '-m',
+      '--model_dir',
+      default='seq_class',
+      help='Model directory to store TF checkpoints')
+  parser.add_argument(
+      '-s'
+      '--steps',
+      dest='steps',
+      type=int,
+      default=1000,
+      help='Number of steps to run.')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
