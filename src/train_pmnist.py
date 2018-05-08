@@ -31,11 +31,10 @@ from model import SkipLSTMCell
 
 FLAGS = None
 
-MAX_DOCUMENT_LENGTH = 10
 EMBEDDING_SIZE = 256
-n_words = 20000
-MAX_LABEL = 15
+VOCAB_SIZE = 0
 WORDS_FEATURE = 'words'  # Name of the input words feature.
+NUM_CLASSES = 0
 
 
 def estimator_spec_for_softmax_classification(logits, labels, mode):
@@ -66,69 +65,76 @@ def estimator_spec_for_softmax_classification(logits, labels, mode):
 def rnn_model(features, labels, mode):
   """RNN model to predict from sequence of words to a class."""
   # Convert indexes of words into embeddings.
-  # This creates embeddings matrix of [n_words, EMBEDDING_SIZE] and then
+
+  def length(sequence):
+    used = tf.sign(tf.reduce_max(tf.abs(sequence), reduction_indices=2))
+    length = tf.reduce_sum(used, reduction_indices=1)
+    length = tf.cast(length, tf.int32)
+    return length
+
+  # This creates embeddings matrix of [VOCAB_SIZE, EMBEDDING_SIZE] and then
   # maps word indexes of the sequence into [batch_size, sequence_length,
   # EMBEDDING_SIZE].
   word_vectors = tf.contrib.layers.embed_sequence(
-      features, vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
+      features, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
 
   # Split into list of embedding per word, while removing doc length dim.
   # word_list results to be a list of tensors [batch_size, EMBEDDING_SIZE].
   # word_list = tf.unstack(word_vectors, axis=1)
 
   # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-  cell = SkipLSTMCell(EMBEDDING_SIZE) #tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
+  cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
+  # cell = tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
 
-  # Create an unrolled Recurrent Neural Networks to length of
-  # MAX_DOCUMENT_LENGTH and passes word_list as inputs for each unit.
+  # Create a dynamic RNN and pass in a function to compute sequence lengths.
+  _, encoding = tf.nn.dynamic_rnn(
+                cell,
+                word_vectors,
+                dtype=tf.float32,
+                sequence_length=length(word_vectors))
 
-  # _, encoding = tf.nn.static_rnn(cell, word_list, dtype=tf.float32)
-  _, encoding = tf.nn.dynamic_rnn(cell, word_vectors, dtype=tf.float32)
-  
   # Given encoding of RNN, take encoding of last step (e.g hidden size of the
   # neural network of last step) and pass it as features for softmax
   # classification over output classes.
-  logits = tf.layers.dense(encoding[0], MAX_LABEL, activation=None)
-
+  # logits = tf.layers.dense(encoding, NUM_CLASSES, activation=None)
+  logits = tf.layers.dense(encoding[0], NUM_CLASSES, activation=None)
   return estimator_spec_for_softmax_classification(
       logits=logits, labels=labels, mode=mode)
 
+# Given a list of sentences that form the dataset, return the vocab size
+def get_vocab_size(data):
+  max_word_index = 0
+  for sen in data:
+      for word in sen:
+          max_word_index = max(max_word_index, word)
+  vocab_size = max_word_index + 1
+  return vocab_size
+
+def get_num_classes(labels):
+  return max(labels)+1
+
+
 
 def main(unused_argv):
-  global n_words
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  # # Prepare training and testing data
-  # dbpedia = tf.contrib.learn.datasets.load_dataset(
-  #     'dbpedia', test_with_fake_data=FLAGS.test_with_fake_data)
-  # x_train = pandas.Series(dbpedia.train.data[:, 1])
-  # y_train = pandas.Series(dbpedia.train.target)
-  # x_test = pandas.Series(dbpedia.test.data[:, 1])
-  # y_test = pandas.Series(dbpedia.test.target)
+  train, val, test = data_utils.load_mnist("PMNIST/mnist_permute.pkl")
+  global VOCAB_SIZE, NUM_CLASSES
 
-  # # Process vocabulary
-  # vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(
-  #     MAX_DOCUMENT_LENGTH)
+  x_train, y_train = train
+  VOCAB_SIZE = get_vocab_size(x_train)
+  NUM_CLASSES = get_num_classes(y_train)
 
-  # x_transform_train = vocab_processor.fit_transform(x_train)
-  # x_transform_test = vocab_processor.transform(x_test)
-
-  # x_train = np.array(list(x_transform_train))
-  # x_test = np.array(list(x_transform_test))
-
-  # n_words = len(vocab_processor.vocabulary_)
-  # print('Total words: %d' % n_words)
-
-  train, val, test = data_utils.load_data("20NG/20news.pkl")
+  print('Total words: %d' % VOCAB_SIZE)
+  print('Number of classes: %d' % NUM_CLASSES)
 
   def gen_train():
-    for data, label in zip(train):
+    for data, label in zip(*train):
       yield (data,label)
 
   def gen_test():
-    for data, label in zip(test):
+    for data, label in zip(*test):
       yield (data,label)
-
 
   # Build model
   model_fn = rnn_model
@@ -138,16 +144,21 @@ def main(unused_argv):
   # Train.
   def train_input_fn():
     ds_train = tf.data.Dataset.from_generator(gen_train, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
-    ds = ds_train.shuffle(len(train[0])).repeat().batch(64)
+    ds = ds_train.shuffle(len(train[0])).repeat().batch(1)
     return ds
 
   def test_input_fn():
-    ds_test = tf.data.Dataset.from_generator(gen_test, (tf.int64, tf.int64), (tf.TensorShape([None]), tf.TensorShape([])))
+    ds_test = tf.data.Dataset.from_generator(
+                    gen_test,
+                    (tf.int64, tf.int64),
+                    (tf.TensorShape([None]), tf.TensorShape([])))
+    ds_test = ds_test.batch(1)
     return ds_test 
 
   classifier.train(input_fn=train_input_fn, steps=300)
 
   # Predict.
+  x_test, y_test = test
   predictions = classifier.predict(input_fn=test_input_fn)
   y_predicted = np.array(list(p['class'] for p in predictions))
   y_predicted = y_predicted.reshape(np.array(y_test).shape)
@@ -157,8 +168,8 @@ def main(unused_argv):
   print('Accuracy (sklearn): {0:f}'.format(score))
 
   # Score with tensorflow.
-  scores = classifier.evaluate(input_fn=test_input_fn)
-  print('Accuracy (tensorflow): {0:f}'.format(scores['accuracy']))
+  # scores = classifier.evaluate(input_fn=test_input_fn)
+  # print('Accuracy (tensorflow): {0:f}'.format(scores['accuracy']))
 
 
 if __name__ == '__main__':
