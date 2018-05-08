@@ -8,6 +8,7 @@ import gzip
 import os
 import numpy as np
 
+
 # TODO: fix dataset importing
 
 # def get_dataset_file(dataset, default_dataset, origin):
@@ -151,18 +152,20 @@ def load_data(data_path="20NG/20news.pkl", n_words=100000, maxlen=None,
         sorted_index = len_argsort(train_set_x)
         train_set_x = [train_set_x[i] for i in sorted_index]
         train_set_y = [train_set_y[i] for i in sorted_index]
-
+    
     train = (train_set_x, train_set_y)
     valid = (valid_set_x, valid_set_y)
     test = (test_set_x, test_set_y)
 
     return train, valid, test
 
-def load_mnist(path='mnist.pkl', fixed_permute=True, rand_permute=False):
+def load_mnist(data_path='mnist.pkl', fixed_permute=True, rand_permute=False):
+    data_dir = "../Data_emnlp16/"
+    path = data_dir + data_path
     f = open(path, 'rb')
-    train = pkl.load(f)
-    valid = pkl.load(f)
-    test = pkl.load(f)
+    train = pkl.load(f, encoding='latin1')
+    valid = pkl.load(f, encoding='latin1')
+    test = pkl.load(f, encoding='latin1')
     f.close()
 
     def _permute(data, perm):
