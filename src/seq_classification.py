@@ -65,14 +65,16 @@ def rnn_model(features, labels, mode):
       features, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
 
   # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-  cell = tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
+  cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
 
   # Create a dynamic RNN and pass in a function to compute sequence lengths.
-  _, encoding = tf.nn.dynamic_rnn(
+  _, state = tf.nn.dynamic_rnn(
                 cell,
                 word_vectors,
                 dtype=tf.float32,
                 sequence_length=length(word_vectors))
+
+  encoding, memory = state
 
   # Given encoding of RNN, take encoding of last step (e.g hidden size of the
   # neural network of last step) and pass it as features for softmax
@@ -100,8 +102,9 @@ def get_num_classes(labels):
 def main(unused_argv):
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  # TODO: Set VOCAB_SIZE to be equal to the vocab size
-  train, val, test = data_utils.load_data("20NG/20news.pkl")
+  data_path = data_utils.get_data_path('PMNIST')
+  print('Accessing training data at path:', data_path)
+  train, val, test = data_utils.load_data(data_path)
   global VOCAB_SIZE, NUM_CLASSES
 
   x_train, y_train = train

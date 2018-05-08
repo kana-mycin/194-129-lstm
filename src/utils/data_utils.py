@@ -36,6 +36,19 @@ import numpy as np
 
 #     return dataset
 
+dataset_name_to_path = {
+  '20NG': '20NG/20news.pkl',
+  'AGnews': 'AGnews/ag_news.pkl',
+  'PMNIST': 'PMNIST/mnist.pkl',
+  'IMDB': 'IMDB/imdb.pkl'
+}
+
+def get_data_path(dataset_name):
+    try:
+        return dataset_name_to_path[dataset_name]
+    except KeyError:
+        raise ValueError("No dataset by the name %s exists" % dataset_name)
+
 def load_data(data_path="20NG/20news.pkl", n_words=100000, maxlen=None,
               sort_by_len=True, fixed_valid=True, valid_portion=0.1):
     '''
@@ -71,10 +84,10 @@ def load_data(data_path="20NG/20news.pkl", n_words=100000, maxlen=None,
     else:
         f = open(path, 'rb')
 
-    train_set = pkl.load(f)
+    train_set = pkl.load(f, encoding='bytes')
     if fixed_valid:
-        valid_set = pkl.load(f)
-    test_set = pkl.load(f)
+        valid_set = pkl.load(f, encoding='bytes')
+    test_set = pkl.load(f, encoding='bytes')
     f.close()
 
     def _truncate_data(train_set):
