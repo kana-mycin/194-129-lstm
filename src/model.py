@@ -2,6 +2,9 @@ import os
 
 import tensorflow as tf
 
+import collections
+from tensorflow.python.framework import ops
+
 # Helper TensorFlow functions
 # from utils import maybe_download
 
@@ -18,8 +21,11 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import rnn_cell_impl
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import nn_ops
+from tensorflow.python.util import nest
 
 
+_BIAS_VARIABLE_NAME = "bias"
+_WEIGHTS_VARIABLE_NAME = "kernel"
 
 
 class SkipLSTMCell(rnn_cell_impl.RNNCell):
@@ -33,7 +39,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         self._forget_bias = forget_bias
         self._activation = activation or math_ops.tanh
         self._output_size = self._num_units + 1
-        self._state_size = (self._num_units, self._num_units, 1)
+        self._state_size = (self._num_units, self._num_units, self._num_units, 1)
 
 
 
@@ -56,8 +62,6 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         if n_skip:
             skip_bool = h_cnt % self._n_skip == 0
 
-        # else:
-        #   c, h = array_ops.split(value=state, num_or_size_splits=2, axis=one)
 
         gate_inputs = math_ops.matmul(
             array_ops.concat([inputs, h], 1), self._kernel)
@@ -74,9 +78,6 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         add = math_ops.add
         multiply = math_ops.multiply
 
-        # c: [B, num_units]
-        # f: [B, num_units/4]
-
         first = multiply(c, sigmoid(add(f, forget_bias_tensor)))
         new_c = add(multiply(c, sigmoid(add(f, forget_bias_tensor))),
                     multiply(sigmoid(i), self._activation(j)))
@@ -88,11 +89,9 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
             h_skip = new_h 
 
         h_cnt += 1
-        new_state = [new_h, new_c, h_skip, h_cnt]
 
+        new_state = SCLSTMStateTuple(new_h, new_c, h_skip, h_cnt)
 
-        # outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
-        # print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
         return new_h, new_state
     @property
     def output_size(self):
@@ -105,12 +104,13 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         return (self._num_units, self._num_units, self._num_units, 1)
 
     def zero_state(self, batch_size, dtype):
-        c = tf.zeros([batch_size, self._num_units])
-        h = tf.zeros([batch_size, self._num_units])
-        print(h.dtype)
-        print(c.dtype)
-        print(tf.Variable(0.0).dtype)
-        return [h, c, h, tf.Variable(0.0, dtype=tf.float32)]
+        c = tf.zeros([batch_size, self._num_units], name='ZeroState')
+        h = tf.zeros([batch_size, self._num_units], name='ZeroState2')
+        h_skip = tf.zeros([batch_size, self._num_units], name='ZeroState3')
+
+        return SCLSTMStateTuple(h, c, h_skip, tf.constant(1, dtype=tf.float32))
+
+
 
     def build(self, inputs_shape):
         if inputs_shape[1].value is None:
@@ -127,4 +127,27 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
             initializer=init_ops.zeros_initializer(dtype=self.dtype))
 
         self.built = True
+
+
+_SCLSTMStateTuple = collections.namedtuple("LSTMStateTuple", ("h", "c", "s", "n"))
+class SCLSTMStateTuple(_SCLSTMStateTuple):
+  """Tuple used by LSTM Cells for `state_size`, `zero_state`, and output state.
+
+  Stores four elements: `(h, c, s, n)`, in that order. Where `h` is the hidden state
+  and `c` is the cell state and `s` is the skip hidden state and `n` is a count of hidden
+  states.
+
+  """
+  __slots__ = ()
+
+  @property
+  def dtype(self):
+    (h, c, s, n) = self
+    if c.dtype != h.dtype:
+      raise TypeError("Inconsistent internal state: %s vs %s" %
+                      (str(c.dtype), str(h.dtype)))
+    return c.dtype
+
+
+
 
