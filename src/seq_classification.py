@@ -1,16 +1,4 @@
-#  Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# borrowed largely from Tensorflow 2016: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/learn/text_classification.py
 """Example of Estimator for DNN-based text classification with DBpedia data."""
 
 from __future__ import absolute_import
@@ -29,12 +17,10 @@ from utils import data_utils
 
 FLAGS = None
 
-# MAX_DOCUMENT_LENGTH = 10
 BATCH_SIZE = 8
 EMBEDDING_SIZE = 50
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
-WORDS_FEATURE = 'words'  # Name of the input words feature.
 
 
 def estimator_spec_for_softmax_classification(logits, labels, mode):
@@ -61,18 +47,6 @@ def estimator_spec_for_softmax_classification(logits, labels, mode):
   return tf.estimator.EstimatorSpec(
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
-# def bag_of_words_model(features, labels, mode):
-#   """A bag-of-words model. Note it disregards the word order in the text."""
-#   bow_column = tf.feature_column.categorical_column_with_identity(
-#       WORDS_FEATURE, num_buckets=VOCAB_SIZE)
-#   bow_embedding_column = tf.feature_column.embedding_column(
-#       bow_column, dimension=EMBEDDING_SIZE)
-#   bow = tf.feature_column.input_layer(
-#       features, feature_columns=[bow_embedding_column])
-#   logits = tf.layers.dense(bow, NUM_CLASSES, activation=None)
-
-#   return estimator_spec_for_softmax_classification(
-#       logits=logits, labels=labels, mode=mode)
 
 def rnn_model(features, labels, mode):
   """RNN model to predict from sequence of words to a class."""
@@ -89,10 +63,6 @@ def rnn_model(features, labels, mode):
   # EMBEDDING_SIZE].
   word_vectors = tf.contrib.layers.embed_sequence(
       features, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
-
-  # Split into list of embedding per word, while removing doc length dim.
-  # word_list results to be a list of tensors [batch_size, EMBEDDING_SIZE].
-  # word_list = tf.unstack(word_vectors, axis=1)
 
   # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
   cell = tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
@@ -160,7 +130,9 @@ def main(unused_argv):
                     (tf.TensorShape([None]), tf.TensorShape([])))
     # For now, we use batch size 1 to avoid the variable length problem
     # A solution is here: https://stackoverflow.com/questions/34670112/how-to-deal-with-batches-with-variable-length-sequences-in-tensorflow
-    ds = ds_train.shuffle(len(train[0])).repeat().batch(1)
+    ds = ds_train.shuffle(len(train[0]))  \
+            .repeat()                     \
+            .padded_batch(BATCH_SIZE, padded_shapes=(tf.TensorShape([None]), tf.TensorShape([])))
     return ds
 
   def test_input_fn():
@@ -168,7 +140,7 @@ def main(unused_argv):
                     gen_test,
                     (tf.int64, tf.int64),
                     (tf.TensorShape([None]), tf.TensorShape([])))
-    ds_test = ds_test.batch(1)
+    ds_test = ds_test.padded_batch(BATCH_SIZE, padded_shapes=(tf.TensorShape([None]), tf.TensorShape([])))
     return ds_test 
 
   classifier.train(input_fn=train_input_fn, steps=300)
@@ -190,15 +162,6 @@ def main(unused_argv):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument(
-      '--test_with_fake_data',
-      default=False,
-      help='Test the example code with fake data.',
-      action='store_true')
-  parser.add_argument(
-      '--bow_model',
-      default=False,
-      help='Run with BOW model instead of RNN.',
-      action='store_true')
+
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
