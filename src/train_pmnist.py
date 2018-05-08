@@ -32,8 +32,8 @@ from model import SkipLSTMCell
 FLAGS = None
 
 MAX_DOCUMENT_LENGTH = 10
-EMBEDDING_SIZE = 50
-n_words = 0
+EMBEDDING_SIZE = 256
+n_words = 20000
 MAX_LABEL = 15
 WORDS_FEATURE = 'words'  # Name of the input words feature.
 
@@ -70,7 +70,7 @@ def rnn_model(features, labels, mode):
   # maps word indexes of the sequence into [batch_size, sequence_length,
   # EMBEDDING_SIZE].
   word_vectors = tf.contrib.layers.embed_sequence(
-      features[WORDS_FEATURE], vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
+      features, vocab_size=n_words, embed_dim=EMBEDDING_SIZE)
 
   # Split into list of embedding per word, while removing doc length dim.
   # word_list results to be a list of tensors [batch_size, EMBEDDING_SIZE].
@@ -84,11 +84,12 @@ def rnn_model(features, labels, mode):
 
   # _, encoding = tf.nn.static_rnn(cell, word_list, dtype=tf.float32)
   _, encoding = tf.nn.dynamic_rnn(cell, word_vectors, dtype=tf.float32)
-
+  
   # Given encoding of RNN, take encoding of last step (e.g hidden size of the
   # neural network of last step) and pass it as features for softmax
   # classification over output classes.
-  logits = tf.layers.dense(encoding, MAX_LABEL, activation=None)
+  logits = tf.layers.dense(encoding[0], MAX_LABEL, activation=None)
+
   return estimator_spec_for_softmax_classification(
       logits=logits, labels=labels, mode=mode)
 
