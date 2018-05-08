@@ -19,7 +19,7 @@ from model import SkipLSTMCell
 
 FLAGS = None
 
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 EMBEDDING_SIZE = 256
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
@@ -67,8 +67,12 @@ def rnn_model(features, labels, mode):
       features, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
 
   # Create an LSTM cell with hidden size of EMBEDDING_SIZE.
-  cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
-  # cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
+  if (FLAGS.cell_type == 'baseline'):
+    cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
+  elif (FLAGS.cell_type == 'skip'):
+    cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
+  else:
+    cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
 
   # Create a dynamic RNN and pass in a function to compute sequence lengths.
   _, state = tf.nn.dynamic_rnn(
@@ -125,6 +129,7 @@ def main(unused_argv):
   print()
 
   print('TRAIN PARAMS\n===============')
+  print('Cell type to use:', FLAGS.cell_type)
   print('Batch size:', BATCH_SIZE)
   print('Embedding size:', EMBEDDING_SIZE)
   print('Model directory:', FLAGS.model_dir)
@@ -184,8 +189,13 @@ def main(unused_argv):
     train_input_fn = overfit_train_input_fn
     test_input_fn = overfit_test_input_fn
 
-  classifier.train(input_fn=train_input_fn, steps=10000)
+  classifier.train(input_fn=train_input_fn, steps=FLAGS.steps)
 
+  print()
+  print("=================")
+  print("train complete, now testing")
+  print("=================")
+  print()
   # # Predict.
   if (FLAGS.overfit):
     x_test = train[0][:OVERFIT_NUM]
@@ -224,11 +234,16 @@ if __name__ == '__main__':
       default='seq_class',
       help='Model directory to store TF checkpoints')
   parser.add_argument(
-      '-s'
+      '-s',
       '--steps',
       dest='steps',
       type=int,
-      default=1000,
+      default=4000,
       help='Number of steps to run.')
+  parser.add_argument(
+      '-c',
+      '--cell_type',
+      default='baseline',
+      help='Type of RNN cell to test')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
