@@ -159,7 +159,13 @@ def main(unused_argv):
     final_model_path = all_models_dir + FLAGS.model_dir
   else: # use a temp folder, i.e. don't save checkpoints
     final_model_path = None
-  classifier = tf.estimator.Estimator(model_fn=model_fn, model_dir=final_model_path)
+
+  # Set session config options to pass into Estimator
+  session_config = tf.ConfigProto()
+  session_config.log_device_placement = True
+  session_config.gpu_options.allow_growth=True
+  estimator_config = tf.estimator.RunConfig(session_config=session_config)
+  classifier = tf.estimator.Estimator(model_fn=model_fn, model_dir=final_model_path, config=estimator_config)
 
   def make_input_fn(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_SIZE, count=None):
 
