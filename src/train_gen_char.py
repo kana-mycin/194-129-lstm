@@ -236,21 +236,31 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
     print("".join(chars))
     return("".join(chars))
 
+def arr_to_str(arr):
+    return "_".join(str(x) for x in arr)
 cell_type = "SkipLSTM"
+skip_layers = [5]
+num_layers = 1 
 g = build_graph(cell_type=cell_type,
                 num_steps=None,
-                skip_layers=[3],
+		num_layers = num_layers,
+                skip_layers=skip_layers,
                 state_size = 512,
                 batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
 
 t = time.time()
-epoch_num = 20
-save_file = "saves/"+ cell_type + "_"+ str(epoch_num) + "_epochs"
+epoch_num = 1010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010 
+if cell_type == "SkipLSTM":
+
+    save_file = "saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
+else:
+    save_file = "saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
+
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
-g = build_graph(cell_type=cell_type, skip_layers=[3], num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
+g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
 generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
 print("It took", time.time() - t, "seconds to train for" + str(epoch_num) + "epochs.")
 print("The average loss on the final epoch was:", losses[-1])
