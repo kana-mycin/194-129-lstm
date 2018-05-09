@@ -4,6 +4,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
 import os
+from pathlib import Path
+
 import urllib.request
 
 """ From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html 
@@ -128,6 +130,7 @@ def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = Tru
 
 def build_graph(
     cell_type = None,
+    skip_layers = [None],
     num_weights_for_custom_cell = 5,
     state_size = 100,
     num_classes = vocab_size,
@@ -149,7 +152,7 @@ def build_graph(
     rnn_inputs = tf.nn.embedding_lookup(embeddings, x)
 
     if cell_type == 'SkipLSTM':
-        cell = SkipLSTMCell(state_size, skip=None)
+        cell = tf.nn.rnn_cell.MultiRNNCell([SkipLSTMCell(state_size, skip) for skip in skip_layers])
     elif cell_type == 'GRU':
         cell = tf.nn.rnn_cell.GRUCell(state_size)
     elif cell_type == 'LSTM':
@@ -161,11 +164,11 @@ def build_graph(
 
     if build_with_dropout:
         cell = tf.nn.rnn_cell.DropoutWrapper(cell, input_keep_prob=dropout)
-
-    if cell_type == 'LSTM' or cell_type == 'LN_LSTM':
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers, state_is_tuple=True)
-    else:
-        cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers)
+    if cell_type != 'SkipLSTM':
+        if cell_type == 'LSTM' or cell_type == 'LN_LSTM':
+            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers, state_is_tuple=True)
+        else:
+            cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers)
 
     if build_with_dropout:
         cell = tf.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=dropout)
@@ -234,11 +237,14 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
     return("".join(chars))
 
 cell_type = "SkipLSTM"
-g = build_graph(cell_type=cell_type, num_steps=None)
+g = build_graph(cell_type=cell_type, skip_layers =[3], num_steps=None)
 t = time.time()
 epoch_num = 20
-losses = train_network(g, epoch_num, num_steps=80, save="saves/"+ cell_type + "_ "+ str(epoch_num) + "_epochs")
-generate_characters(g, "saves/"+ cell_type + "_ "+ str(epoch_num) + "_epochs_generated_sentences" , 750, prompt='A', pick_top_chars=5)
+save_file = "saves/"+ cell_type + "_"+ str(epoch_num) + "_epochs"
+# if not Path(save_file + ".index").is_file():
+losses = train_network(g, epoch_num, num_steps=80, save=save_file)
+g = build_graph(cell_type=cell_type, batch_size=1, skip_layers =[3], num_steps=1)
+generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
 print("It took", time.time() - t, "seconds to train for" + str(epoch_num) + "epochs.")
 print("The average loss on the final epoch was:", losses[-1])
 
