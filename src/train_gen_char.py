@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 from pathlib import Path
-
+import math
 import urllib.request
 
 """ From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html 
@@ -98,34 +98,6 @@ def reset_graph():
         sess.close()
     tf.reset_default_graph()
 
-def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = True, save=False):
-    tf.set_random_seed(2345)
-    with tf.Session() as sess:
-        sess.run(tf.initialize_all_variables())
-        training_losses = []
-        for idx, epoch in enumerate(gen_epochs(num_epochs, num_steps, batch_size)):
-            training_loss = 0
-            steps = 0
-            training_state = None
-            for X, Y in epoch:
-                steps += 1
-
-                feed_dict={g['x']: X, g['y']: Y}
-                if training_state is not None:
-                    feed_dict[g['init_state']] = training_state
-                training_loss_, training_state, _ = sess.run([g['total_loss'],
-                                                      g['final_state'],
-                                                      g['train_step']],
-                                                             feed_dict)
-                training_loss += training_loss_
-            if verbose:
-                print("Average training loss for Epoch", idx, ":", training_loss/steps)
-            training_losses.append(training_loss/steps)
-
-        if isinstance(save, str):
-            g['saver'].save(sess, save)
-
-    return training_losses
 
 
 def build_graph(
@@ -189,8 +161,33 @@ def build_graph(
 
     predictions = tf.nn.softmax(logits)
 
+    Y = tf.argmax(predictions, 1)                          # [ BATCHSIZE x SEQLEN ]
+    Y = tf.reshape(Y, [-1], name="Y")
+
+
+
     total_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_reshaped))
     train_step = tf.train.AdamOptimizer(learning_rate).minimize(total_loss)
+    
+    # https://github.com/burliEnterprises/tensorflow-shakespeare-poem-generator/blob/master/rnn_train.py
+    # accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.cast(y_reshaped, tf.uint8), tf.cast(Y, tf.uint8)), tf.float32))
+
+    # loss_summary = tf.summary.scalar("batch_loss", total_loss)
+    # acc_summary = tf.summary.scalar("batch_accuracy", accuracy)
+    # summaries = tf.summary.merge([loss_summary, acc_summary])
+
+    # Init Tensorboard stuff. This will save Tensorboard information into a different
+    # folder at each run named 'log/<timestamp>/'. Two sets of data are saved so that
+    # you can compare training and validation curves visually in Tensorboard.
+    # timestamp = str(math.trunc(time.time()))
+    # summary_writer = tf.summary.FileWriter("log/" + timestamp + "-training")
+    # validation_writer = tf.summary.FileWriter("log/" + timestamp + "-validation")
+
+    # Init for saving models. They will be saved into a directory named 'checkpoints'.
+    # Only the last checkpoint is kept.
+    # if not os.path.exists("checkpoints"):
+    #     os.mkdir("checkpoints")
+    saver = tf.train.Saver(max_to_keep=1000)
 
     return dict(
         x = x,
@@ -198,10 +195,49 @@ def build_graph(
         init_state = init_state,
         final_state = final_state,
         total_loss = total_loss,
+        # batch_accuracy = accuracy,
         train_step = train_step,
         preds = predictions,
-        saver = tf.train.Saver()
+        saver = saver
     )
+
+def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = True, save=False):
+    tf.set_random_seed(2345)
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        training_losses = []
+        for idx, epoch in enumerate(gen_epochs(num_epochs, num_steps, batch_size)):
+
+            training_loss = 0
+            batch_accuracy = 0
+            steps = 0
+            training_state = None
+            for X, Y in epoch:
+                steps += 1
+
+                feed_dict={g['x']: X, g['y']: Y}
+                if training_state is not None:
+                    feed_dict[g['init_state']] = training_state
+                training_loss_,  training_state, _ = sess.run([g['total_loss'],
+                                                                                # g['batch_accuracy'],
+                                                                                g['final_state'],
+                                                                                g['train_step']],
+                                                                                feed_dict)
+                training_loss += training_loss_
+                # batch_accuracy += batch_accuracy_
+            # if ():
+            #     summary_writer.add_summary(smm, step)
+            # if ():
+            #     validation_writer.add_summary(smm, step)
+            if verbose:
+                print("Average training loss for Epoch", idx, ":", training_loss/steps)
+                print("Average accuracy for Epoch", idx, ":", batch_accuracy/steps)
+            training_losses.append(training_loss/steps)
+
+        if isinstance(save, str):
+            g['saver'].save(sess, save)
+
+    return training_losses
 
 def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=None):
     """ Accepts a current character, initial state"""
@@ -240,7 +276,7 @@ def arr_to_str(arr):
     return "_".join(str(x) for x in arr)
 
 cell_type = "SkipLSTM"
-skip_layers = [3,5,10]
+skip_layers = [5]
 num_layers = 1
 g = build_graph(cell_type=cell_type,
                 num_steps=None,
@@ -250,6 +286,7 @@ g = build_graph(cell_type=cell_type,
                 batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
+epoch_num = 10
 
 t = time.time()
 if cell_type == "SkipLSTM":
@@ -258,7 +295,6 @@ if cell_type == "SkipLSTM":
 else:
     save_file = "saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
 
-epoch_num = 20
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
 g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
