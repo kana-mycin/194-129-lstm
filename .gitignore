@@ -103,5 +103,9 @@ ENV/
 # DS Store
 .DS_Store
 
-# Data folder
+# Data folders
 Data_emnlp16/
+nmt/datasets
+
+# Model checkpoints
+src/checkpoints

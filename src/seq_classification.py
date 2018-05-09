@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import argparse
 import sys
+import os
 
 import numpy as np
 from sklearn import metrics
@@ -15,6 +16,8 @@ import tensorflow as tf
 from utils import data_utils
 
 from model import SkipLSTMCell, RecurrentResidualCell
+
+all_models_dir = "checkpoints/"
 
 FLAGS = None
 
@@ -142,6 +145,7 @@ def main(unused_argv):
   print()
 
   def make_gen(dataset):
+
     def gen():
       for data, label in zip(*dataset):
         if (len(data) < max_data_length):
@@ -152,9 +156,14 @@ def main(unused_argv):
 
   # Build model
   model_fn = rnn_model
-  classifier = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.model_dir)
+  if (FLAGS.model_dir):
+    final_model_path = all_models_dir + FLAGS.model_dir
+  else: # use a temp folder, i.e. don't save checkpoints
+    final_model_path = None
+  classifier = tf.estimator.Estimator(model_fn=model_fn, model_dir=final_model_path)
 
   def make_input_fn(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_SIZE, count=None):
+
     def input_fn():
       gen = make_gen(dataset)
       ds = tf.data.Dataset.from_generator(
@@ -246,4 +255,8 @@ if __name__ == '__main__':
       default='baseline',
       help='Type of RNN cell to test')
   FLAGS, unparsed = parser.parse_known_args()
+  try:
+    os.mkdir(all_models_dir)
+  except OSError:
+    print("Checkpoint directory already exists:", all_models_dir)
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
