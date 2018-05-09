@@ -17,7 +17,7 @@ import tensorflow as tf
 
 from utils import data_utils
 
-from model import SkipLSTMCell
+from model import SkipLSTMCell, RecurrentResidualCell
 
 FLAGS = None
 
@@ -73,8 +73,9 @@ def rnn_model(features, labels, mode):
   # word_list = tf.unstack(word_vectors, axis=1)
 
   # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-  cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
+  # cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
   # cell = tf.nn.rnn_cell.GRUCell(EMBEDDING_SIZE)
+  cell = RecurrentResidualCell(EMBEDDING_SIZE)
 
   # Create a dynamic RNN and pass in a function to compute sequence lengths.
   _, encoding = tf.nn.dynamic_rnn(
@@ -108,7 +109,7 @@ def get_num_classes(labels):
 def main(unused_argv):
   tf.logging.set_verbosity(tf.logging.INFO)
 
-  train, val, test = data_utils.load_mnist("PMNIST/mnist_permute.pkl")
+  train, val, test = data_utils.load_mnist("20NG/20news.pkl")
   global VOCAB_SIZE, NUM_CLASSES
 
   x_train, y_train = train

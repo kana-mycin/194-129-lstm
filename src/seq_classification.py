@@ -15,7 +15,7 @@ import tensorflow as tf
 
 from utils import data_utils
 
-from model import SkipLSTMCell  
+from model import SkipLSTMCell, RecurrentResidualCell
 
 FLAGS = None
 
@@ -71,6 +71,8 @@ def rnn_model(features, labels, mode):
     cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
   elif (FLAGS.cell_type == 'skip'):
     cell = SkipLSTMCell(EMBEDDING_SIZE, n_skip=10)
+  elif (FLAGS.cell_type == 'rrn'):
+    cell = RecurrentResidualCell(EMBEDDING_SIZE, k_depth=2)
   else:
     cell = tf.nn.rnn_cell.LSTMCell(EMBEDDING_SIZE)
 
