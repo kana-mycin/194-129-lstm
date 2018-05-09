@@ -238,17 +238,19 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
 
 cell_type = "SkipLSTM"
 g = build_graph(cell_type=cell_type,
-                num_steps=80,
+                num_steps=None,
+                skip_layers=[3],
                 state_size = 512,
-                batch_size = 50,
+                batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
+
 t = time.time()
 epoch_num = 20
 save_file = "saves/"+ cell_type + "_"+ str(epoch_num) + "_epochs"
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
-g = build_graph(cell_type=cell_type, num_steps=1, batch_size=1, num_classes=vocab_size, state_size = 512)
+g = build_graph(cell_type=cell_type, skip_layers=[3], num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
 generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
 print("It took", time.time() - t, "seconds to train for" + str(epoch_num) + "epochs.")
 print("The average loss on the final epoch was:", losses[-1])
