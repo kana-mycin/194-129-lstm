@@ -118,9 +118,9 @@ def main(unused_argv):
   data_path = data_utils.get_data_path(FLAGS.dataset)
   print('Accessing training data at path:', data_path)
   if (FLAGS.dataset == 'PMNIST'):
-    train, val, test = data_utils.load_mnist(data_path)
+    train, val, test = data_utils.load_mnist(data_path, maxlen=max_data_length)
   else:
-    train, val, test = data_utils.load_data(data_path)
+    train, val, test = data_utils.load_data(data_path, maxlen=max_data_length)
   global VOCAB_SIZE, NUM_CLASSES
 
   x_train, y_train = train
@@ -148,9 +148,8 @@ def main(unused_argv):
 
     def gen():
       for data, label in zip(*dataset):
-        if (len(data) < max_data_length):
-          features = {"data": data, "length": len(data)}
-          yield (features, label)
+        features = {"data": data, "length": len(data)}
+        yield (features, label)
 
     return gen
 
