@@ -105,3 +105,4 @@ ENV/
 
 # Data folder
 Data_emnlp16/
+datasets/
