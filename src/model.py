@@ -5,14 +5,6 @@ import tensorflow as tf
 import collections
 from tensorflow.python.framework import ops
 
-# Helper TensorFlow functions
-# from utils import maybe_download
-
-# The encoder-decoder architecture
-# from nmt.model import Model
-# from nmt.utils import vocab_utils
-# from nmt.train import train
-
 from tensorflow.contrib.rnn import BasicLSTMCell, LSTMStateTuple
 from tensorflow.python.ops import math_ops
 from tensorflow.python.framework import constant_op
@@ -31,7 +23,6 @@ _TRANSFORM_VARIABLE_NAME = "U"
 
 class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
-    
 
     def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=None, **kwargs):
         super(SkipLSTMCell, self).__init__(_reuse=reuse)
@@ -42,19 +33,15 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         self._output_size = self._num_units + 1
         self._state_size = (self._num_units, self._num_units, self._num_units, 1)
 
-
-
     def call(self, inputs, state):
         """Run this multi-layer cell on inputs, starting from state.
         inputs: [B, I + sum(ha_l)]
         state: a list of [c_{t-1}, h_{t-1}, h_skip, h_cnt]
         """
-
         sigmoid = math_ops.sigmoid
-
         one = constant_op.constant(1, dtype=dtypes.int32)
+
         # Parameters of gates are concatenated into one multiply for efficiency.
-        # if self._state_is_tuple:
         c, h, h_skip, h_cnt = state
         n_skip = self._n_skip
         if n_skip:
@@ -67,7 +54,6 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         # i = input_gate, j = new_input, f = forget_gate, o = output_gate
         i, j, f, o = array_ops.split(
             value=gate_inputs, num_or_size_splits=4, axis=one)
-
         forget_bias_tensor = constant_op.constant(self._forget_bias, dtype=f.dtype)
 
         # Note that using `add` and `multiply` instead of `+` and `*` gives a
@@ -86,10 +72,9 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
             h_skip = new_h 
 
         h_cnt += 1
-
         new_state = SCLSTMStateTuple(new_h, new_c, h_skip, h_cnt)
-
         return new_h, new_state
+    
     @property
     def output_size(self):
         # outputs h and z
@@ -104,10 +89,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         c = tf.zeros([batch_size, self._num_units], name='ZeroState')
         h = tf.zeros([batch_size, self._num_units], name='ZeroState2')
         h_skip = tf.zeros([batch_size, self._num_units], name='ZeroState3')
-
         return SCLSTMStateTuple(h, c, h_skip, tf.constant(1, dtype=tf.float32))
-
-
 
     def build(self, inputs_shape):
         if inputs_shape[1].value is None:
@@ -149,9 +131,6 @@ class SCLSTMStateTuple(_SCLSTMStateTuple):
 
 
 
-
-
-
 class RecurrentResidualCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
     
@@ -172,31 +151,28 @@ class RecurrentResidualCell(rnn_cell_impl.RNNCell):
         inputs: x ; [B, H]
         state: a list of [h_{t-1}]
         """
-
         sigmoid = math_ops.sigmoid
         add = math_ops.add
         multiply = math_ops.multiply
-
-        h = state[0]
 
         transformed_input = math_ops.matmul(inputs, self._kernel)
         transformed_input = nn_ops.bias_add(transformed_input, self._bias)
         in_all = array_ops.split(value=transformed_input, num_or_size_splits=self._k_depth, axis=1)
 
+        h = state[0]
         y = h
         for idx in range(self._k_depth):
             hy = math_ops.matmul(y, self._U_dict[idx])
             y = sigmoid(in_all[idx] + hy)
 
         new_h = self._activation(add(h, y))
-
-
         new_state = RRNStateTuple(new_h)
 
         return new_h, new_state
+
     @property
     def output_size(self):
-        # outputs h and z
+        # output h
         return self._num_units
 
     @property
@@ -233,6 +209,30 @@ class RecurrentResidualCell(rnn_cell_impl.RNNCell):
 
 
 
+"""
+Define state tuples for the models, for consistent implementations.
+"""
+
+_SCLSTMStateTuple = collections.namedtuple("LSTMStateTuple", ("h", "c", "s", "n"))
+class SCLSTMStateTuple(_SCLSTMStateTuple):
+  """
+  Tuple used by LSTM Cells for `state_size`, `zero_state`, and output state.
+
+  Stores four elements: `(h, c, s, n)`, in that order. Where `h` is the hidden state
+  and `c` is the cell state and `s` is the skip hidden state and `n` is a count of hidden
+  states.
+  """
+  __slots__ = ()
+
+  @property
+  def dtype(self):
+    (h, c, s, n) = self
+    if c.dtype != h.dtype:
+      raise TypeError("Inconsistent internal state: %s vs %s" %
+                      (str(c.dtype), str(h.dtype)))
+    return c.dtype
+
+
 _RRNStateTuple = collections.namedtuple("RRNStateTuple", ("h"))
 class RRNStateTuple(_RRNStateTuple):
   """
@@ -245,5 +245,3 @@ class RRNStateTuple(_RRNStateTuple):
   def dtype(self):
     (h) = self
     return h.dtype
-
-

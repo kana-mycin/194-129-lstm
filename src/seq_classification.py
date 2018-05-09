@@ -67,8 +67,6 @@ def rnn_model(features, labels, mode):
   word_vectors = tf.contrib.layers.embed_sequence(
       data, vocab_size=VOCAB_SIZE, embed_dim=EMBEDDING_SIZE)
 
-  word_vectors = tf.Print(word_vectors, [length[:3]])
-
   # Create an LSTM cell with hidden size of HIDDEN_DIM.
   if (FLAGS.cell_type == 'baseline'):
     cell = tf.nn.rnn_cell.LSTMCell(HIDDEN_DIM)
