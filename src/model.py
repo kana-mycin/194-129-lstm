@@ -20,6 +20,10 @@ _BIAS_VARIABLE_NAME = "bias"
 _WEIGHTS_VARIABLE_NAME = "kernel"
 _TRANSFORM_VARIABLE_NAME = "U"
 
+def genMultiLayerSkipLSTM(cell, skip_layer):
+    cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers, state_is_tuple=True)
+    return cell
+
 
 class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
