@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 
 import collections
+from tensorflow.python.framework import ops
 
 # Helper TensorFlow functions
 # from utils import maybe_download
@@ -20,6 +21,8 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import rnn_cell_impl
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import nn_ops
+from tensorflow.python.util import nest
+
 
 _BIAS_VARIABLE_NAME = "bias"
 _WEIGHTS_VARIABLE_NAME = "kernel"
@@ -72,9 +75,6 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
         add = math_ops.add
         multiply = math_ops.multiply
 
-        # c: [B, num_units]
-        # f: [B, num_units/4]
-
         first = multiply(c, sigmoid(add(f, forget_bias_tensor)))
         new_c = add(multiply(c, sigmoid(add(f, forget_bias_tensor))),
                     multiply(sigmoid(i), self._activation(j)))
@@ -89,10 +89,6 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
 
         new_state = SCLSTMStateTuple(new_h, new_c, h_skip, h_cnt)
 
-
-        # outputs, next_state = super(SkipLSTMCell, self).call(inputs, state)
-        # print_output = LSTMStateTuple(tf.Print(next_state.c, x), tf.Print(next_state.h, x))
-
         return new_h, new_state
     @property
     def output_size(self):
@@ -102,12 +98,16 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
     @property
     def state_size(self):
         # the state is c, h, h_skip, h_cnt
-        return SCLSTMStateTuple(self._num_units, self._num_units, self._num_units, 1)
+        return (self._num_units, self._num_units, self._num_units, 1)
 
     def zero_state(self, batch_size, dtype):
-        c = tf.zeros([batch_size, self._num_units])
-        h = tf.zeros([batch_size, self._num_units])
-        return SCLSTMStateTuple(h, c, h, 0)
+        c = tf.zeros([batch_size, self._num_units], name='ZeroState')
+        h = tf.zeros([batch_size, self._num_units], name='ZeroState2')
+        h_skip = tf.zeros([batch_size, self._num_units], name='ZeroState3')
+
+        return SCLSTMStateTuple(h, c, h_skip, tf.constant(1, dtype=tf.float32))
+
+
 
     def build(self, inputs_shape):
         if inputs_shape[1].value is None:
