@@ -41,7 +41,7 @@ class SkipLSTMCell(rnn_cell_impl.RNNCell):
     """ Based on the paper http://www.aclweb.org/anthology/D16-1093 """
     
 
-    def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=None, **kwargs):
+    def __init__(self, num_units, forget_bias=1.0, activation=None, reuse=None, n_skip=10, **kwargs):
         super(SkipLSTMCell, self).__init__(_reuse=reuse)
         self._n_skip = n_skip
         self._num_units = num_units
@@ -193,22 +193,21 @@ def create_standard_hparams(data_path, out_dir):
         residual=False,
         time_major=True,
         num_embeddings_partitions=0,
-
         unit_type="custom",
         custom_cell=SkipLSTMCell,
 
         # Train
-        optimizer="adam",
+        optimizer="sgd",
         batch_size=128,
         init_op="uniform",
         init_weight=0.1,
         max_gradient_norm=100.0,
-        learning_rate=0.001,
+        learning_rate=1.0,
         warmup_steps=0,
         warmup_scheme="t2t",
         decay_scheme="luong234",
         colocate_gradients_with_ops=True,
-        num_train_steps=12000,
+        num_train_steps=20000,
 
         # Data constraints
         num_buckets=5,
@@ -228,8 +227,8 @@ def create_standard_hparams(data_path, out_dir):
         forget_bias=1.0,
         num_gpus=1,
         epoch_step=0,  # record where we were within an epoch.
-        steps_per_stats=10,
-        steps_per_eval=10,
+        steps_per_stats=100,
+        steps_per_eval=1000,
         steps_per_external_eval=500,
         share_vocab=False,
         metrics=["bleu"],
@@ -278,7 +277,7 @@ def create_standard_hparams(data_path, out_dir):
 # If desired as a baseline, train a vanilla LSTM model without attention
 hparams = create_standard_hparams(
     data_path=os.path.join("datasets", "nmt_data_vi"), 
-    out_dir="nmt_model_test"
+    out_dir="nmt_model_test_length10_higher_lr"
 )
 
 hparams.add_hparam("attention", "")
