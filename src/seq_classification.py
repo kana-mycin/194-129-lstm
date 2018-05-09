@@ -48,11 +48,10 @@ def estimator_spec_for_softmax_classification(logits, labels, mode):
     optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
     train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
     return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
-
-  eval_metric_ops = {
-      'accuracy':
-          tf.metrics.accuracy(labels=labels, predictions=predicted_classes)
-  }
+  
+  acc = tf.metrics.accuracy(labels=labels, predictions=predicted_classes)
+  eval_metric_ops = {'accuracy': acc}
+  tf.summary.scalar('accuracy', acc[1])
   return tf.estimator.EstimatorSpec(
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
@@ -162,12 +161,19 @@ def main(unused_argv):
 
   # Set session config options to pass into Estimator
   session_config = tf.ConfigProto()
-  session_config.log_device_placement = True
-  session_config.gpu_options.allow_growth=True
-  estimator_config = tf.estimator.RunConfig(session_config=session_config)
-  classifier = tf.estimator.Estimator(model_fn=model_fn, model_dir=final_model_path, config=estimator_config)
+  session_config.gpu_options.allow_growth = True
+  run_metadata = tf.RunMetadata()
+  options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+  estimator_config = tf.estimator.RunConfig(session_config=options, save_summary_steps=FLAGS.save_summ_steps)
+  
+  
+    
+    
+  classifier = tf.estimator.Estimator(
+                             model_fn=model_fn, model_dir=final_model_path,
+                             config=estimator_config)
 
-  def make_input_fn(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_SIZE, count=None):
+  def make_input_fn(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_SIZE, count=None, prefetch=True):
 
     def input_fn():
       gen = make_gen(dataset)
@@ -185,6 +191,8 @@ def main(unused_argv):
               padded_shapes=({"data": tf.TensorShape([None]),
                              "length": tf.TensorShape([])},
                              tf.TensorShape([])))
+      if (prefetch):
+        ds = ds.prefetch(buffer_size=1)
       return ds
     return input_fn
 
@@ -202,7 +210,7 @@ def main(unused_argv):
   else: # use regular batching and all the data
     train_input_fn = make_input_fn(train, shuffle=True, repeat=True)
     test_input_fn = make_input_fn(test, shuffle=False, repeat=False)
-
+  
   classifier.train(input_fn=train_input_fn, steps=FLAGS.steps)
 
   print()
@@ -259,6 +267,10 @@ if __name__ == '__main__':
       '--cell_type',
       default='baseline',
       help='Type of RNN cell to test')
+  parser.add_argument(
+      '--save_summ_steps',
+      default=50,
+      help='number of steps between summary saves')
   FLAGS, unparsed = parser.parse_known_args()
   try:
     os.mkdir(all_models_dir)
