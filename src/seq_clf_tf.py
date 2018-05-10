@@ -94,7 +94,7 @@ def build_graph(
   batch_size = 16,
   num_steps = 200,
   num_layers = 1,
-  grad_clip = 100,
+  grad_norm = 1,
   lr = 1e-3):
 
   # reset_graph()
@@ -139,7 +139,7 @@ def build_graph(
   # train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(total_loss, global_step=tf.train.get_global_step())
   optimizer = tf.train.AdamOptimizer(learning_rate=lr)
   gvs = optimizer.compute_gradients(total_loss)
-  capped_gvs = [(tf.clip_by_value(grad, -grad_clip, grad_clip), var) for grad, var in gvs]
+  capped_gvs = [(tf.clip_by_norm(grad, grad_norm), var) for grad, var in gvs]
   train_step = optimizer.apply_gradients(capped_gvs, global_step=tf.train.get_global_step())
 
 
@@ -237,7 +237,7 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
           write_avg_summ(test_writer, step, test_acc_lst, 'accuracy')
      
           print("Val acc: %.4f"%np.mean(val_acc_lst))
-          print("Test acc: %.4f"%np.mean(test_loss_lst))
+          print("Test acc: %.4f"%np.mean(test_acc_lst))
           sess.run(train_init_op)
         
 
@@ -264,9 +264,13 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
 
     write_avg_summ(test_writer, step, test_acc_lst, 'accuracy')
     write_avg_summ(test_writer, step, test_loss_lst, 'loss')
-    
-    print("Sum test loss: %.5f\nSum test Accuracy: %.5f"%(test_loss_tot, test_acc))
-    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss_tot/num_test_iters, test_acc/num_test_iters))
+
+    print()
+    print("===================================")
+    print("train complete, testing results:")
+    print("===================================")
+    print()
+    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(np.mean(test_loss_lst), np.mean(test_acc)))
 
     if isinstance(save, str):
       g['saver'].save(sess, save)
@@ -290,11 +294,15 @@ def main(unused_argv):
   VOCAB_SIZE = get_vocab_size(x_train)
   NUM_CLASSES = get_num_classes(y_train)
 
+  data_lens = [len(train[0]), len(val[0]), len(test[0])]
+
+
   print()
   print('DATASET PARAMS\n===============')
   print('Dataset:', FLAGS.dataset)
   print('Total words:', VOCAB_SIZE)
   print('Number of classes:', NUM_CLASSES)
+  print('Number of examples in train/test/val:')
   print()
 
   print('TRAIN PARAMS\n===============')
@@ -331,8 +339,7 @@ def main(unused_argv):
   val_init_op = it.make_initializer(val_ds)
   test_init_op = it.make_initializer(test_ds)
 
-  data_lens = [len(train[0]), len(val[0]), len(test[0])]
-  print(data_lens)
+  
 
   g = build_graph(features, labels, cell_type=FLAGS.cell_type, num_steps=FLAGS.steps,
             batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES, vocab_size=VOCAB_SIZE, state_size=HIDDEN_DIM)
