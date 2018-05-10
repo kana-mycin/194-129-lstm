@@ -8,7 +8,7 @@ from pathlib import Path
 import math
 import urllib.request
 
-""" From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html
+""" From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html 
 """
 """
 Load and process data, utility functions
@@ -297,25 +297,25 @@ num_layers = 1
 g = build_graph(cell_type=cell_type,
                 num_steps=None,
                 skip_layers=skip_layers,
-                state_size = 100,
+                state_size = 512,
                 batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
-epoch_num = 1
+epoch_num = 20
 
 t = time.time()
 
 if cell_type == "SkipLSTM":
 
-    save_file = "gen_char_saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs"
+    save_file = "gen_char_saves/"+ cell_type + "/" + arr_to_str(skip_layers) + "layers_"+ str(epoch_num) + "_epochs"
 else:
-    save_file = "gen_char_saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs"
+    save_file = "gen_char_saves/"+ cell_type +"/" + str(num_layers) + "layers_"+ str(epoch_num) + "_epochs"
 
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
-g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 100)
+g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
 generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
-print("It took ", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
+print("It took", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
 print("The average loss on the final epoch was:", losses[-1])
 
 f = open(save_file + "_data.txt", "a+")
