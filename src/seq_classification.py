@@ -162,9 +162,7 @@ def main(unused_argv):
   # Set session config options to pass into Estimator
   session_config = tf.ConfigProto()
   session_config.gpu_options.allow_growth = True
-  run_metadata = tf.RunMetadata()
-  options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-  estimator_config = tf.estimator.RunConfig(session_config=options, save_summary_steps=FLAGS.save_summ_steps)
+  estimator_config = tf.estimator.RunConfig(session_config=session_config, save_summary_steps=FLAGS.save_summ_steps)
   
   
     

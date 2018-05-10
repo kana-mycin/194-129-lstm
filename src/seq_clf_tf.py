@@ -75,6 +75,10 @@ def make_input_ds(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_S
                          tf.TensorShape([])))
   if (prefetch):
     ds = ds.prefetch(buffer_size=1)
+  # ds = ds.shuffle(10000).repeat().padded_batch(batch_size,
+  #         padded_shapes=({"data": tf.TensorShape([None]),
+  #                        "length": tf.TensorShape([])},
+  #                        tf.TensorShape([]))).prefetch(buffer_size=1)
   return ds
 
 def reset_graph():
@@ -106,7 +110,7 @@ def build_graph(
     data, vocab_size=vocab_size, embed_dim=EMBEDDING_SIZE)
 
   if cell_type == 'baseline':
-    cell = tf.nn.rnn_cell.LSTMCell(state_size)
+    cell = tf.contrib.rnn.LSTMCell(state_size)
   elif cell_type == 'skip':
     cell = SkipLSTMCell(state_size, n_skip=10)
   elif cell_type == 'rrn':
@@ -124,8 +128,12 @@ def build_graph(
 
   state = final_state[0]
 
-  logits = tf.layers.dense(state, num_classes, activation=None)
-  # y_reshaped = tf.reshape(y, [-1])
+  with tf.variable_scope('dense_output'):
+    W = tf.get_variable('W', [state_size, num_classes])
+    b = tf.get_variable('b', [num_classes], initializer=tf.constant_initializer(0.0))
+    logits = tf.matmul(state, W) + b
+  # logits = tf.layers.dense(state, num_classes, activation=None)
+
   predictions = tf.argmax(logits, 1)
 
   acc = tf.reduce_mean(tf.cast(tf.equal(y, predictions), tf.float32))
@@ -193,7 +201,7 @@ def train_network(g, train_init_op, test_init_op, num_steps=200, batch_size=16, 
     sess.run(test_init_op)
     test_loss, test_acc = sess.run([g['total_loss'], g['accuracy']])
     
-    print("Test Loss: %.5f\nTest Accuracy: %.5f".format(test_loss, test_acc))
+    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss, test_acc))
 
     if isinstance(save, str):
       g['saver'].save(sess, save)
