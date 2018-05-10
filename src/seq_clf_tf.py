@@ -23,8 +23,8 @@ all_models_dir = "checkpoints/"
 FLAGS = None
 
 GLOBAL_BATCH_SIZE = 16
-EMBEDDING_SIZE = 256
-HIDDEN_DIM = 256
+EMBEDDING_SIZE = 64
+HIDDEN_DIM = 64
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
 OVERFIT_NUM = 50
@@ -221,14 +221,15 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     # initialise iterator with test data
     num_test_iters = test_len//batch_size
     test_loss_tot = 0
-    test_tot_acc = 0
+    test_acc_tot = 0
     sess.run(test_init_op)
     for _ in range(num_test_iters):
         test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
         test_loss_tot += test_loss
         test_acc_tot += test_acc
         test_writer.add_summary(test_summary, step)
-
+    
+    print("Sum test loss: %.5f\nSum test Accuracy: %.5f"%(test_loss_tot, test_acc))
     print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss_tot/num_test_iters, test_acc/num_test_iters))
 
     if isinstance(save, str):
@@ -345,7 +346,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '-m',
       '--model_dir',
-      default=None,
+      default='test_runtime',
       help='Model directory to store TF checkpoints')
   parser.add_argument(
       '-s',
