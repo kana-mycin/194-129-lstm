@@ -204,7 +204,8 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
           val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
           val_writer.add_summary(val_summary, step)
           print("Val acc: %.4f"%val_acc)
-
+          sess.run(train_init_op)
+        
         # Print loss every 100 steps
         if step%100 == 0:
           if step == 0:
