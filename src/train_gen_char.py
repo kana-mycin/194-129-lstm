@@ -8,7 +8,7 @@ from pathlib import Path
 import math
 import urllib.request
 
-""" From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html 
+""" From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html
 """
 """
 Load and process data, utility functions
@@ -168,7 +168,7 @@ def build_graph(
 
     total_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_reshaped))
     train_step = tf.train.AdamOptimizer(learning_rate).minimize(total_loss)
-    
+
     # https://github.com/burliEnterprises/tensorflow-shakespeare-poem-generator/blob/master/rnn_train.py
     accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.cast(y_reshaped, tf.uint8), tf.cast(Y, tf.uint8)), tf.float32))
 
@@ -272,15 +272,11 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
     print("".join(chars))
     return("".join(chars))
 
-def arr_to_str(arr):
-    return "_".join(str(x) for x in arr)
-
 cell_type = "SkipLSTM"
 skip_layers = [5]
 num_layers = 1
 g = build_graph(cell_type=cell_type,
                 num_steps=None,
-                num_layers = num_layers,
                 skip_layers=skip_layers,
                 state_size = 100,
                 batch_size = 32,
@@ -297,7 +293,7 @@ else:
 
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
-g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
+g = build_graph(cell_type=cell_type, skip_layers=[3], num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
 generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
 print("It took", time.time() - t, "seconds to train for" + str(epoch_num) + "epochs.")
 print("The average loss on the final epoch was:", losses[-1])
