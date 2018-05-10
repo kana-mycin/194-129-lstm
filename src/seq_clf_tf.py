@@ -58,16 +58,17 @@ def make_gen(dataset):
   return gen
 
 def make_input_ds(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_SIZE, count=None, prefetch=True):
+
   gen = make_gen(dataset)
   ds = tf.data.Dataset.from_generator(
                 gen,
                 ({"data": tf.int64, "length": tf.int64}, tf.int64),
                 ({"data": tf.TensorShape([None]), "length": tf.TensorShape([])}, tf.TensorShape([])))
-  if (count):
+  if count:
     ds = ds.take(count)
-  if (shuffle):
+  if shuffle:
     ds = ds.shuffle(10000)
-  if (repeat):
+  if repeat:
     ds = ds.repeat()
   ds = ds.padded_batch(batch_size,
           padded_shapes=({"data": tf.TensorShape([None]),
@@ -102,9 +103,8 @@ def build_graph(
 
   x = inputs
   y = labels
-
-  data = inputs["data"]
-  length = inputs["length"]
+  data = x["data"]
+  length = x["length"]
 
   word_vectors = tf.contrib.layers.embed_sequence(
     data, vocab_size=vocab_size, embed_dim=EMBEDDING_SIZE)
@@ -173,34 +173,41 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
     tot_loss = 0
     t = time.time()
     for step in range(num_steps):
-
-        _, train_summary, loss_value, train_state, _ = sess.run([train_init_op, merged, g['total_loss'], g['final_state'], g['train_step']])
-        train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
-        tot_loss += loss_value
-        training_losses.append(loss_value)
-
-        # Record runtime stats every 100th step, starting at 99
-        if step % 100 == 99:
+        
+        # Record runtime stats every 100th step, starting at 20
+        if step % 100 == 20:
           run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
           run_metadata = tf.RunMetadata()
-          _, meta_summary = sess.run([train_init_op, merged],
+          train_summary, loss_value, _, _ = sess.run(
+                                [merged, g['total_loss'], g['final_state'], g['train_step']],
                                 options=run_options,
                                 run_metadata=run_metadata)
           train_writer.add_run_metadata(run_metadata, 'step%d'%step)
-          train_writer.add_summary(meta_summary, step)
+          train_writer.add_summary(train_summary, step)
+          tot_loss += loss_value
+          training_losses.append(loss_value)
 
           # Timeline
           tl = timeline.Timeline(run_metadata.step_stats)
           ctf = tl.generate_chrome_trace_format()
-          with open('timeline_%d.json'%step, 'w') as f:
+          with open(save+'/timeline_%d.json'%step, 'w') as f:
               f.write(ctf)
 
           print('Adding run metadata for step %d'%step)
+        else:
+            train_summary, loss_value, train_state, _ = sess.run([merged, g['total_loss'], g['final_state'], g['train_step']])
+            train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
+            tot_loss += loss_value
+            training_losses.append(loss_value)
 
-        # Record validation stats (loss, accuracy) at every 50th step
+
+        # Record validation stats (loss, accuracy) at every 5000th step
         if step % 50 == 0:
-          _, val_summary, val_loss, val_acc = sess.run([val_init_op, merged, g['total_loss'], g['accuracy']])
-          val_writer.add_summary(val_summary, step)
+          for val_steps in range(1):
+            sess.run(val_init_op)
+            val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
+            val_writer.add_summary(val_summary, step)
+            print("writing val")
 
         # Print loss every 100 steps
         if step%100 == 0:
@@ -214,7 +221,9 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
 
 
     # initialise iterator with test data
-    _, test_summary, test_loss, test_acc = sess.run([test_init_op, merged, g['total_loss'], g['accuracy']])
+    sess.run(test_init_op)
+    # for i in 
+    test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
     test_writer.add_summary(test_summary, step)
 
     print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss, test_acc))
@@ -270,8 +279,8 @@ def main(unused_argv):
   
 
   train_ds = make_input_ds(train, shuffle=True, repeat=True)
-  val_ds = make_input_ds(val, shuffle=False, repeat=False)
-  test_ds = make_input_ds(test, shuffle=False, repeat=False)
+  val_ds = make_input_ds(val, shuffle=False, repeat=True)
+  test_ds = make_input_ds(test, shuffle=False, repeat=True)
 
   it = tf.data.Iterator.from_structure(train_ds.output_types,
                                            train_ds.output_shapes)
