@@ -13,6 +13,7 @@ import time
 import numpy as np
 from sklearn import metrics
 import tensorflow as tf
+from tensorflow.python.client import timeline
 
 from utils import data_utils
 
@@ -156,12 +157,13 @@ def build_graph(
 
 
 
-def train_network(g, train_init_op, test_init_op, num_steps=200, batch_size=16, verbose=True, save=True):
+def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, batch_size=16, verbose=True, save=True):
   tf.set_random_seed(2345)
   with tf.Session() as sess:
 
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(save + '/train', sess.graph)
+    val_writer = tf.summary.FileWriter(save + '/val', sess.graph)
     test_writer = tf.summary.FileWriter(save + '/test')
 
 
@@ -172,20 +174,34 @@ def train_network(g, train_init_op, test_init_op, num_steps=200, batch_size=16, 
     tot_loss = 0
     t = time.time()
     for step in range(num_steps):
-        _, summary, loss_value, train_state, _ = sess.run([train_init_op, merged, g['total_loss'], g['final_state'], g['train_step']])
-        train_writer.add_summary(summary, step)
+
+        _, train_summary, loss_value, train_state, _ = sess.run([train_init_op, merged, g['total_loss'], g['final_state'], g['train_step']])
+        train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
         tot_loss += loss_value
         training_losses.append(loss_value)
 
-        if step % 100 == 99:  # Record execution stats
+        # Record runtime stats every 100th step, starting at 99
+        if step % 100 == 99:
           run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
           run_metadata = tf.RunMetadata()
-          _, summary = sess.run([train_init_op, merged],
+          _, meta_summary = sess.run([train_init_op, merged],
                                 options=run_options,
                                 run_metadata=run_metadata)
           train_writer.add_run_metadata(run_metadata, 'step%d'%step)
-          train_writer.add_summary(summary, step)
+          train_writer.add_summary(meta_summary, step)
+
+          # Timeline
+          tl = timeline.Timeline(run_metadata.step_stats)
+          ctf = tl.generate_chrome_trace_format()
+          with open('timeline_%d.json'%step, 'w') as f:
+              f.write(ctf)
+
           print('Adding run metadata for step %d'%step)
+
+        # Record validation stats (loss, accuracy) at every 50th step
+        if step % 50 == 0:
+          _, val_summary, val_loss, val_acc = sess.run([val_init_op, merged, g['total_loss'], g['accuracy']])
+          val_writer.add_summary(val_summary, step)
 
         # Print loss every 100 steps
         if step%100 == 0:
@@ -197,10 +213,11 @@ def train_network(g, train_init_op, test_init_op, num_steps=200, batch_size=16, 
           tot_loss=0
           t = time.time()
 
+
     # initialise iterator with test data
-    sess.run(test_init_op)
-    test_loss, test_acc = sess.run([g['total_loss'], g['accuracy']])
-    
+    _, test_summary, test_loss, test_acc = sess.run([test_init_op, merged, g['total_loss'], g['accuracy']])
+    test_writer.add_summary(test_summary, step)
+
     print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss, test_acc))
 
     if isinstance(save, str):
@@ -275,8 +292,8 @@ def main(unused_argv):
   # train_writer = tf.summary.FileWriter(final_model_path + '/train', sess.graph)
   # test_writer = tf.summary.FileWriter(final_model_path + '/test')
 
-  train_losses, test_loss, test_acc = train_network(g, train_init_op, test_init_op,
-                                              num_steps=FLAGS.steps, batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
+  train_losses, test_loss, test_acc = train_network(g, train_init_op, val_init_op, test_init_op, num_steps=FLAGS.steps, 
+                                                    batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
 
 
   print()
