@@ -170,7 +170,7 @@ def build_graph(
     train_step = tf.train.AdamOptimizer(learning_rate).minimize(total_loss)
     
     # https://github.com/burliEnterprises/tensorflow-shakespeare-poem-generator/blob/master/rnn_train.py
-    # accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.cast(y_reshaped, tf.uint8), tf.cast(Y, tf.uint8)), tf.float32))
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.cast(y_reshaped, tf.uint8), tf.cast(Y, tf.uint8)), tf.float32))
 
     # loss_summary = tf.summary.scalar("batch_loss", total_loss)
     # acc_summary = tf.summary.scalar("batch_accuracy", accuracy)
@@ -195,7 +195,7 @@ def build_graph(
         init_state = init_state,
         final_state = final_state,
         total_loss = total_loss,
-        # batch_accuracy = accuracy,
+        batch_accuracy = accuracy,
         train_step = train_step,
         preds = predictions,
         saver = saver
@@ -218,13 +218,13 @@ def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = Tru
                 feed_dict={g['x']: X, g['y']: Y}
                 if training_state is not None:
                     feed_dict[g['init_state']] = training_state
-                training_loss_,  training_state, _ = sess.run([g['total_loss'],
-                                                                                # g['batch_accuracy'],
+                training_loss_,  batch_accuracy_, training_state, _ = sess.run([g['total_loss'],
+                                                                                g['batch_accuracy'],
                                                                                 g['final_state'],
                                                                                 g['train_step']],
                                                                                 feed_dict)
                 training_loss += training_loss_
-                # batch_accuracy += batch_accuracy_
+                batch_accuracy += batch_accuracy_
             # if ():
             #     summary_writer.add_summary(smm, step)
             # if ():
@@ -282,7 +282,7 @@ g = build_graph(cell_type=cell_type,
                 num_steps=None,
                 num_layers = num_layers,
                 skip_layers=skip_layers,
-                state_size = 512,
+                state_size = 100,
                 batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
