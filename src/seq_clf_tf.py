@@ -155,7 +155,9 @@ def build_graph(
 
 def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_steps=200, batch_size=16, verbose=True, save=True):
   train_len, val_len, test_len = data_lens
-  with tf.Session() as sess:
+  config = tf.ConfigProto()
+  config.gpu_options.allow_growth=True
+  with tf.Session(config=config) as sess:
     
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(save + '/train', sess.graph)
