@@ -95,8 +95,10 @@ def build_graph(
   num_steps = 200,
   num_layers = 1,
   lr = 1e-3):
-
+  
+  dropout_is_train = tf.placeholder(tf.bool)
   # reset_graph()
+  keep_prob = tf.cond(dropout_is_train, lambda: tf.constant(0.5), lambda: tf.constant(1.0))
 
   x = inputs
   y = labels
@@ -105,6 +107,8 @@ def build_graph(
 
   word_vectors = tf.contrib.layers.embed_sequence(
     data, vocab_size=vocab_size, embed_dim=EMBEDDING_SIZE)
+
+  word_vectors = tf.nn.dropout(word_vectors, keep_prob=keep_prob)
 
   if cell_type == 'baseline':
     cell = tf.contrib.rnn.LSTMCell(state_size)
@@ -124,6 +128,7 @@ def build_graph(
                                 sequence_length=length)
 
   state = final_state[0]
+  state = tf.nn.dropout(state, keep_prob=keep_prob)
 
   with tf.variable_scope('dense_output'):
     W = tf.get_variable('W', [state_size, num_classes])
@@ -142,6 +147,7 @@ def build_graph(
   return dict(
       x = x,
       y = y,
+      dropout_is_train = dropout_is_train,
       init_state = init_state,
       final_state = final_state,
       total_loss = total_loss,
@@ -172,6 +178,8 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     tot_loss = 0
     t = time.time()
     for step in range(num_steps):
+
+        dropout_is_train = g['dropout_is_train']
         
         # Record runtime stats every 500th step, starting at 20
         if step % 500 == 20:
@@ -179,6 +187,7 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
           run_metadata = tf.RunMetadata()
           train_summary, loss_value, _, _ = sess.run(
                                 [merged, g['total_loss'], g['final_state'], g['train_step']],
+                                feed_dict={dropout_is_train: True},
                                 options=run_options,
                                 run_metadata=run_metadata)
           train_writer.add_run_metadata(run_metadata, 'step%d'%step)
@@ -194,7 +203,9 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
 
           print('Adding run metadata for step %d'%step)
         else:
-            train_summary, loss_value, train_state, _ = sess.run([merged, g['total_loss'], g['final_state'], g['train_step']])
+            train_summary, loss_value, train_state, _ = sess.run(
+                  [merged, g['total_loss'], g['final_state'], g['train_step']],
+                  feed_dict={dropout_is_train: True})
             train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
             tot_loss += loss_value
             training_losses.append(loss_value)
@@ -203,12 +214,16 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
         # Record validation stats (loss, accuracy) at every 50th step
         if step % 50 == 0:
           sess.run(val_init_op)
-          val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
+          val_summary, val_loss, val_acc = sess.run(
+                  [merged, g['total_loss'], g['accuracy']],
+                  feed_dict={dropout_is_train: False})
           val_writer.add_summary(val_summary, step)
           print("Val acc: %.4f"%val_acc)
 
           sess.run(test_init_op)
-          test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
+          test_summary, test_loss, test_acc = sess.run(
+                  [merged, g['total_loss'], g['accuracy']],
+                  feed_dict={dropout_is_train: False})
           test_writer.add_summary(test_summary, step)
           print("Test acc: %.4f"%test_acc)
 
@@ -232,7 +247,9 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     test_acc_tot = 0
     sess.run(test_init_op)
     for _ in range(num_test_iters):
-        test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
+        test_summary, test_loss, test_acc = sess.run(
+              [merged, g['total_loss'], g['accuracy']],
+              feed_dict={dropout_is_train: False})
         test_loss_tot += test_loss
         test_acc_tot += test_acc
         test_writer.add_summary(test_summary, step)
