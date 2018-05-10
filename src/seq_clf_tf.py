@@ -23,8 +23,8 @@ all_models_dir = "checkpoints/"
 FLAGS = None
 
 GLOBAL_BATCH_SIZE = 16
-EMBEDDING_SIZE = 256
-HIDDEN_DIM = 256
+EMBEDDING_SIZE = 64
+HIDDEN_DIM = 64
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
 OVERFIT_NUM = 50
@@ -153,10 +153,10 @@ def build_graph(
 
 
 
-def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, batch_size=16, verbose=True, save=True):
-  tf.set_random_seed(2345)
+def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_steps=200, batch_size=16, verbose=True, save=True):
+  train_len, val_len, test_len = data_lens
   with tf.Session() as sess:
-
+    
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(save + '/train', sess.graph)
     val_writer = tf.summary.FileWriter(save + '/val')
@@ -219,11 +219,18 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
 
 
     # initialise iterator with test data
+    num_test_iters = test_len//batch_size
+    test_loss_tot = 0
+    test_acc_tot = 0
     sess.run(test_init_op)
-    test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-    test_writer.add_summary(test_summary, step)
-
-    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss, test_acc))
+    for _ in range(num_test_iters):
+        test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
+        test_loss_tot += test_loss
+        test_acc_tot += test_acc
+        test_writer.add_summary(test_summary, step)
+    
+    print("Sum test loss: %.5f\nSum test Accuracy: %.5f"%(test_loss_tot, test_acc))
+    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss_tot/num_test_iters, test_acc/num_test_iters))
 
     if isinstance(save, str):
       g['saver'].save(sess, save)
@@ -288,7 +295,8 @@ def main(unused_argv):
   val_init_op = it.make_initializer(val_ds)
   test_init_op = it.make_initializer(test_ds)
 
-
+  data_lens = [len(train[0]), len(val[0]), len(test[0])]
+  print(data_lens)
 
   g = build_graph(features, labels, cell_type=FLAGS.cell_type, num_steps=FLAGS.steps,
             batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES, vocab_size=VOCAB_SIZE, state_size=HIDDEN_DIM)
@@ -297,8 +305,8 @@ def main(unused_argv):
   # train_writer = tf.summary.FileWriter(final_model_path + '/train', sess.graph)
   # test_writer = tf.summary.FileWriter(final_model_path + '/test')
 
-  train_losses, test_loss, test_acc = train_network(g, train_init_op, val_init_op, test_init_op, num_steps=FLAGS.steps, 
-                                                    batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
+  train_losses, test_loss, test_acc = train_network(g, train_init_op, val_init_op, test_init_op, data_lens, 
+                                       num_steps=FLAGS.steps, batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
 
 
   print()
@@ -338,7 +346,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '-m',
       '--model_dir',
-      default=None,
+      default='test_runtime',
       help='Model directory to store TF checkpoints')
   parser.add_argument(
       '-s',
