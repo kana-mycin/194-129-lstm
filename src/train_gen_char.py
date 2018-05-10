@@ -202,8 +202,12 @@ def build_graph(
     )
 
 def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = True, save=False):
-    tf.set_random_seed(2345)
-    with tf.Session() as sess:
+    session_config = tf.ConfigProto() 
+    session_config.gpu_options.allow_growth = True
+    if save:
+        f = open(save + "_data.txt", "w+")
+
+    with tf.Session(config=session_config) as sess:
         sess.run(tf.initialize_all_variables())
         training_losses = []
         for idx, epoch in enumerate(gen_epochs(num_epochs, num_steps, batch_size)):
@@ -232,10 +236,16 @@ def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = Tru
             if verbose:
                 print("Average training loss for Epoch", idx, ":", training_loss/steps)
                 print("Average accuracy for Epoch", idx, ":", batch_accuracy/steps)
+            if save:
+                f.write("Average training loss for Epoch" + str(idx) + ":" + str(training_loss/steps)+ "\n")
+                f.write("Average accuracy for Epoch" + str(idx) + ":"+ str(batch_accuracy/steps) + "\n")
+
             training_losses.append(training_loss/steps)
 
         if isinstance(save, str):
             g['saver'].save(sess, save)
+        if save:
+            f.close()
 
     return training_losses
 
@@ -269,8 +279,17 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
             chars.append(current_char)
 
     chars = map(lambda x: idx_to_vocab[x], chars)
-    print("".join(chars))
-    return("".join(chars))
+    # print("".join(chars))
+    text = "".join(chars)
+    print(text)
+    f = open(checkpoint + "_data.txt", "a+")
+    f.write(text)
+    f.close()
+
+    return(text)
+
+def arr_to_str(arr):
+    return '.'.join(str(e) for e in arr)
 
 cell_type = "SkipLSTM"
 skip_layers = [5]
@@ -282,19 +301,26 @@ g = build_graph(cell_type=cell_type,
                 batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
-epoch_num = 10
+epoch_num = 1
 
 t = time.time()
+
 if cell_type == "SkipLSTM":
 
-    save_file = "saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
+    save_file = "gen_char_saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs"
 else:
-    save_file = "saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
+    save_file = "gen_char_saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs"
 
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
-g = build_graph(cell_type=cell_type, skip_layers=[3], num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
+g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 100)
 generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
-print("It took", time.time() - t, "seconds to train for" + str(epoch_num) + "epochs.")
+print("It took ", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
 print("The average loss on the final epoch was:", losses[-1])
+
+f = open(save_file + "_data.txt", "a+")
+f.write("It took" + str(time.time() - t)+ "seconds to train for " + str(epoch_num) + "epochs.\n")
+f.write ("The average loss on the final epoch was:"+ str(losses[-1]) + "\n")
+f.close()
+
 
