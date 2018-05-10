@@ -99,7 +99,6 @@ def reset_graph():
     tf.reset_default_graph()
 
 
-
 def build_graph(
     cell_type = None,
     skip_layers = [None],
@@ -172,21 +171,19 @@ def build_graph(
     # https://github.com/burliEnterprises/tensorflow-shakespeare-poem-generator/blob/master/rnn_train.py
     accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.cast(y_reshaped, tf.uint8), tf.cast(Y, tf.uint8)), tf.float32))
 
-    # loss_summary = tf.summary.scalar("batch_loss", total_loss)
-    # acc_summary = tf.summary.scalar("batch_accuracy", accuracy)
-    # summaries = tf.summary.merge([loss_summary, acc_summary])
+    loss_summary = tf.summary.scalar("batch_loss", total_loss)
+    acc_summary = tf.summary.scalar("batch_accuracy", accuracy)
+    summaries = tf.summary.merge([loss_summary, acc_summary])
 
     # Init Tensorboard stuff. This will save Tensorboard information into a different
     # folder at each run named 'log/<timestamp>/'. Two sets of data are saved so that
     # you can compare training and validation curves visually in Tensorboard.
-    # timestamp = str(math.trunc(time.time()))
-    # summary_writer = tf.summary.FileWriter("log/" + timestamp + "-training")
-    # validation_writer = tf.summary.FileWriter("log/" + timestamp + "-validation")
+
 
     # Init for saving models. They will be saved into a directory named 'checkpoints'.
     # Only the last checkpoint is kept.
-    # if not os.path.exists("checkpoints"):
-    #     os.mkdir("checkpoints")
+    if not os.path.exists("checkpoints"):
+        os.mkdir("checkpoints")
     saver = tf.train.Saver(max_to_keep=1000)
 
     return dict(
@@ -198,41 +195,46 @@ def build_graph(
         batch_accuracy = accuracy,
         train_step = train_step,
         preds = predictions,
-        saver = saver
+        saver = saver,
+        summaries = summaries,
     )
 
+
 def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = True, save=False):
-    session_config = tf.ConfigProto() 
+    timestamp = str(math.trunc(time.time()))
+    # TODO:@jiana rename log to better file Name
+    summary_writer = tf.summary.FileWriter("log/" + save + timestamp + "-training")
+    # validation_writer = tf.summary.FileWriter("log/" + timestamp + "-validation")
+    session_config = tf.ConfigProto()
     session_config.gpu_options.allow_growth = True
     if save:
         f = open(save + "_data.txt", "w+")
-
+    total_steps = 0
     with tf.Session(config=session_config) as sess:
         sess.run(tf.initialize_all_variables())
         training_losses = []
         for idx, epoch in enumerate(gen_epochs(num_epochs, num_steps, batch_size)):
-
             training_loss = 0
             batch_accuracy = 0
             steps = 0
             training_state = None
             for X, Y in epoch:
                 steps += 1
+                total_steps+=1
 
                 feed_dict={g['x']: X, g['y']: Y}
                 if training_state is not None:
                     feed_dict[g['init_state']] = training_state
-                training_loss_,  batch_accuracy_, training_state, _ = sess.run([g['total_loss'],
+                training_loss_,  batch_accuracy_, training_state, smm, _  = sess.run([g['total_loss'],
                                                                                 g['batch_accuracy'],
                                                                                 g['final_state'],
-                                                                                g['train_step']],
+                                                                                g['summaries'],
+                                                                                g['train_step'],
+                                                                                ],
                                                                                 feed_dict)
                 training_loss += training_loss_
                 batch_accuracy += batch_accuracy_
-            # if ():
-            #     summary_writer.add_summary(smm, step)
-            # if ():
-            #     validation_writer.add_summary(smm, step)
+                summary_writer.add_summary(smm, total_steps)
             if verbose:
                 print("Average training loss for Epoch", idx, ":", training_loss/steps)
                 print("Average accuracy for Epoch", idx, ":", batch_accuracy/steps)
@@ -301,21 +303,21 @@ g = build_graph(cell_type=cell_type,
                 batch_size = 32,
                 num_classes=vocab_size,
                 learning_rate=5e-4)
-epoch_num = 1
+epoch_num = 2
 
 t = time.time()
 
 if cell_type == "SkipLSTM":
 
-    save_file = "gen_char_saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs"
+    save_file = "gen_char_saves/"+ cell_type + "/" + arr_to_str(skip_layers) + "layers_"+ str(epoch_num) + "epochs"
 else:
-    save_file = "gen_char_saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs"
+    save_file = "gen_char_saves/"+ cell_type +"/" + str(num_layers) + "layers_"+ str(epoch_num) + "epochs"
 
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
 g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 100)
 generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
-print("It took ", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
+print("It took", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
 print("The average loss on the final epoch was:", losses[-1])
 
 f = open(save_file + "_data.txt", "a+")
