@@ -91,7 +91,7 @@ def build_graph(
   state_size = 256,
   num_classes = NUM_CLASSES,
   vocab_size = VOCAB_SIZE,
-  batch_size = 32,
+  batch_size = 16,
   num_steps = 200,
   num_layers = 1,
   lr = 1e-3):
@@ -159,7 +159,7 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
 
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(save + '/train', sess.graph)
-    val_writer = tf.summary.FileWriter(save + '/val', sess.graph)
+    val_writer = tf.summary.FileWriter(save + '/val')
     test_writer = tf.summary.FileWriter(save + '/test')
 
 
@@ -171,8 +171,8 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
     t = time.time()
     for step in range(num_steps):
         
-        # Record runtime stats every 100th step, starting at 20
-        if step % 100 == 20:
+        # Record runtime stats every 500th step, starting at 20
+        if step % 500 == 20:
           run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
           run_metadata = tf.RunMetadata()
           train_summary, loss_value, _, _ = sess.run(
@@ -198,7 +198,7 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
             training_losses.append(loss_value)
 
 
-        # Record validation stats (loss, accuracy) at every 5000th step
+        # Record validation stats (loss, accuracy) at every 50th step
         if step % 50 == 0:
           sess.run(val_init_op)
           val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
@@ -276,7 +276,7 @@ def main(unused_argv):
   
 
   train_ds = make_input_ds(train, shuffle=True, repeat=True)
-  val_ds = make_input_ds(val, shuffle=False, repeat=True)
+  val_ds = make_input_ds(val, shuffle=True, repeat=True)
   test_ds = make_input_ds(test, shuffle=False, repeat=True)
 
   it = tf.data.Iterator.from_structure(train_ds.output_types,
