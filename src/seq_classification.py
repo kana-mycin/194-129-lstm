@@ -22,8 +22,8 @@ all_models_dir = "checkpoints/"
 FLAGS = None
 
 GLOBAL_BATCH_SIZE = 16
-EMBEDDING_SIZE = 256
-HIDDEN_DIM = 256
+EMBEDDING_SIZE = 50
+HIDDEN_DIM = 50
 VOCAB_SIZE = 0
 NUM_CLASSES = 0
 OVERFIT_NUM = 50
@@ -162,13 +162,19 @@ def main(unused_argv):
   # Set session config options to pass into Estimator
   session_config = tf.ConfigProto()
   session_config.gpu_options.allow_growth = True
-  run_metadata = tf.RunMetadata()
-  options=tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-  estimator_config = tf.estimator.RunConfig(session_config=options, save_summary_steps=FLAGS.save_summ_steps)
-  
-  
-    
-    
+  estimator_config = tf.estimator.RunConfig(session_config=session_config, save_summary_steps=FLAGS.save_summ_steps)
+
+  hooks = []
+
+  if (final_model_path):
+    profile_dir = final_model_path + "/profile"
+    os.mkdir(profile_dir)
+    profiler_hook = tf.train.ProfilerHook(save_steps=1,
+                                          output_dir=profile_dir,
+                                          show_dataflow=True,
+                                          show_memory=True)
+    hooks.append(profiler_hook)
+
   classifier = tf.estimator.Estimator(
                              model_fn=model_fn, model_dir=final_model_path,
                              config=estimator_config)
@@ -211,7 +217,7 @@ def main(unused_argv):
     train_input_fn = make_input_fn(train, shuffle=True, repeat=True)
     test_input_fn = make_input_fn(test, shuffle=False, repeat=False)
   
-  classifier.train(input_fn=train_input_fn, steps=FLAGS.steps)
+  classifier.train(input_fn=train_input_fn, steps=FLAGS.steps, hooks=hooks)
 
   print()
   print("=================")

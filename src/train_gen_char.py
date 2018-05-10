@@ -285,15 +285,11 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
 
     return("".join(chars))
 
-def arr_to_str(arr):
-    return "_".join(str(x) for x in arr)
-
 cell_type = "SkipLSTM"
 skip_layers = [5]
 num_layers = 1
 g = build_graph(cell_type=cell_type,
                 num_steps=None,
-                num_layers = num_layers,
                 skip_layers=skip_layers,
                 state_size = 512,
                 batch_size = 32,
@@ -302,6 +298,7 @@ g = build_graph(cell_type=cell_type,
 epoch_num = 10
 
 t = time.time()
+
 if cell_type == "SkipLSTM":
 
     save_file = "saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
