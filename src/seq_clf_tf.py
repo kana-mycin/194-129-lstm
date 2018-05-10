@@ -11,7 +11,6 @@ import os
 import time
 
 import numpy as np
-from sklearn import metrics
 import tensorflow as tf
 from tensorflow.python.client import timeline
 
