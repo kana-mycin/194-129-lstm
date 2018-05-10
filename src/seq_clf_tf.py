@@ -58,6 +58,7 @@ def make_gen(dataset):
   return gen
 
 def make_input_ds(dataset, shuffle=False, repeat=True, batch_size=GLOBAL_BATCH_SIZE, count=None, prefetch=True):
+
   gen = make_gen(dataset)
   ds = tf.data.Dataset.from_generator(
                 gen,
@@ -99,9 +100,8 @@ def build_graph(
 
   x = inputs
   y = labels
-
-  data = inputs["data"]
-  length = inputs["length"]
+  data = x["data"]
+  length = x["length"]
 
   word_vectors = tf.contrib.layers.embed_sequence(
     data, vocab_size=vocab_size, embed_dim=EMBEDDING_SIZE)
@@ -171,8 +171,6 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
     t = time.time()
     for step in range(num_steps):
         
-        
-        
         # Record runtime stats every 100th step, starting at 20
         if step % 100 == 20:
           run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -200,7 +198,7 @@ def train_network(g, train_init_op, val_init_op, test_init_op, num_steps=200, ba
             training_losses.append(loss_value)
 
 
-        # Record validation stats (loss, accuracy) at every 50th step
+        # Record validation stats (loss, accuracy) at every 5000th step
         if step % 50 == 0:
           sess.run(val_init_op)
           val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
