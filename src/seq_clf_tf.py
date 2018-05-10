@@ -94,6 +94,7 @@ def build_graph(
   batch_size = 16,
   num_steps = 200,
   num_layers = 1,
+  grad_clip = 100,
   lr = 1e-3):
 
   # reset_graph()
@@ -135,7 +136,13 @@ def build_graph(
 
   acc = tf.reduce_mean(tf.cast(tf.equal(y, predictions), tf.float32))
   total_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y))
-  train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(total_loss, global_step=tf.train.get_global_step())
+  # train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(total_loss, global_step=tf.train.get_global_step())
+  optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+  gvs = optimizer.compute_gradients(total_loss)
+  capped_gvs = [(tf.clip_by_value(grad, -grad_clip, grad_clip), var) for grad, var in gvs]
+  train_step = optimizer.apply_gradients(capped_gvs, global_step=tf.train.get_global_step())
+
+
   tf.summary.scalar('loss', total_loss)
   tf.summary.scalar('accuracy', acc)
 
