@@ -91,7 +91,7 @@ def build_graph(
   state_size = 256,
   num_classes = NUM_CLASSES,
   vocab_size = VOCAB_SIZE,
-  batch_size = 32,
+  batch_size = 16,
   num_steps = 200,
   num_layers = 1,
   lr = 1e-3):
@@ -159,7 +159,7 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(save + '/train', sess.graph)
-    val_writer = tf.summary.FileWriter(save + '/val', sess.graph)
+    val_writer = tf.summary.FileWriter(save + '/val')
     test_writer = tf.summary.FileWriter(save + '/test')
 
 
@@ -283,7 +283,7 @@ def main(unused_argv):
   
 
   train_ds = make_input_ds(train, shuffle=True, repeat=True)
-  val_ds = make_input_ds(val, shuffle=False, repeat=True)
+  val_ds = make_input_ds(val, shuffle=True, repeat=True)
   test_ds = make_input_ds(test, shuffle=False, repeat=True)
 
   it = tf.data.Iterator.from_structure(train_ds.output_types,
