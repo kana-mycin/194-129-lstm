@@ -244,6 +244,8 @@ def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = Tru
 
         if isinstance(save, str):
             g['saver'].save(sess, save)
+        if save:
+            f.close()
 
     return training_losses
 
@@ -278,12 +280,16 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
 
     chars = map(lambda x: idx_to_vocab[x], chars)
     print("".join(chars))
+    text = " ".join(chars)
     if save:
         f = open(save + "_data.txt", "a+")
-        f.write(" ".join(chars) + "\n")
-
+        f.write(text + "\n")
+        f.close()
 
     return("".join(chars))
+
+def arr_to_str(arr):
+    return '.'.join(str(e) for e in arr)
 
 cell_type = "SkipLSTM"
 skip_layers = [5]
@@ -301,19 +307,19 @@ t = time.time()
 
 if cell_type == "SkipLSTM":
 
-    save_file = "saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
+    save_file = "saves/"+ cell_type + arr_to_str(skip_layers) + "_"+ str(epoch_num) + "_epochs"
 else:
-    save_file = "saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs.ckpt"
+    save_file = "saves/"+ cell_type + str(num_layers) + "_"+ str(epoch_num) + "_epochs"
 
 # if not Path(save_file + ".index").is_file():
 losses = train_network(g, epoch_num, num_steps=80, save=save_file)
 g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 512)
-generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5, save= save_file)
-print("It took", time.time() - t, "seconds to train for" + str(epoch_num) + "epochs.")
+generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5, save=save_file)
+print("It took", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
 print("The average loss on the final epoch was:", losses[-1])
 
 f = open(save_file + "_data.txt", "a+")
-f.write("It took" + str(time.time() - t)+ "seconds to train for" + str(epoch_num) + "epochs.\n")
+f.write("It took" + str(time.time() - t)+ "seconds to train for " + str(epoch_num) + "epochs.\n")
 f.write ("The average loss on the final epoch was:"+ str(losses[-1]) + "\n")
 f.close()
 
