@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import math
 import urllib.request
+import ast
 
 """ From https://r2rt.com/recurrent-neural-networks-in-tensorflow-ii.html
 """
@@ -202,9 +203,8 @@ def build_graph(
 
 def train_network(g, num_epochs, num_steps = 200, batch_size = 32, verbose = True, save=False):
     timestamp = str(math.trunc(time.time()))
-    # TODO:@jiana rename log to better file Name
     summary_writer = tf.summary.FileWriter("log/" + save + timestamp + "-training")
-    # validation_writer = tf.summary.FileWriter("log/" + timestamp + "-validation")
+
     session_config = tf.ConfigProto()
     session_config.gpu_options.allow_growth = True
     if save:
@@ -281,7 +281,6 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
             chars.append(current_char)
 
     chars = map(lambda x: idx_to_vocab[x], chars)
-    # print("".join(chars))
     text = "".join(chars)
     print(text)
     f = open(checkpoint + "_data.txt", "a+")
@@ -293,36 +292,66 @@ def generate_characters(g, checkpoint, num_chars, prompt='A', pick_top_chars=Non
 def arr_to_str(arr):
     return '.'.join(str(e) for e in arr)
 
-cell_type = "SkipLSTM"
-skip_layers = [5]
-num_layers = 1
-g = build_graph(cell_type=cell_type,
-                num_steps=None,
-                skip_layers=skip_layers,
-                state_size = 100,
-                batch_size = 32,
-                num_classes=vocab_size,
-                learning_rate=5e-4)
-epoch_num = 2
+def run(argv):
 
-t = time.time()
+    _CELL = "LSTM"
+    _NUM_LAYERS = 1
+    _NUM_EPOCHS = 10
 
-if cell_type == "SkipLSTM":
+    cell_type = argv.get("cell", _CELL)
+    skip_layers = argv.get("skip_layers", None)
+    if skip_layers:
+        skip_layers = ast.literal_eval(skip_layers)
+    num_layers = int(argv.get("num_layers", _NUM_LAYERS))
+    epoch_num = int(argv.get("num_epochs", _NUM_EPOCHS))
 
-    save_file = "gen_char_saves/"+ cell_type + "/" + arr_to_str(skip_layers) + "layers_"+ str(epoch_num) + "epochs"
-else:
-    save_file = "gen_char_saves/"+ cell_type +"/" + str(num_layers) + "layers_"+ str(epoch_num) + "epochs"
+    g = build_graph(cell_type=cell_type,
+                    num_steps=None,
+                    skip_layers=skip_layers,
+                    state_size = 526,
+                    batch_size = 32,
+                    num_classes=vocab_size,
+                    learning_rate=5e-4)
+    print("==========================")
+    print("Running")
+    print("Cell Type: ", cell_type)
+    if cell_type == "LSTM":
+        print("Layers: ", num_layers)
+    else:
+        print("Skip Layers: ", skip_layers)
+    print("Num Epochs: ", epoch_num)
+    print("==========================")
+    t = time.time()
 
-# if not Path(save_file + ".index").is_file():
-losses = train_network(g, epoch_num, num_steps=80, save=save_file)
-g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 100)
-generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
-print("It took", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
-print("The average loss on the final epoch was:", losses[-1])
+    if cell_type == "SkipLSTM":
 
-f = open(save_file + "_data.txt", "a+")
-f.write("It took" + str(time.time() - t)+ "seconds to train for " + str(epoch_num) + "epochs.\n")
-f.write ("The average loss on the final epoch was:"+ str(losses[-1]) + "\n")
-f.close()
+        save_file = "gen_char_saves/"+ cell_type + "/" + arr_to_str(skip_layers) + "layers_"+ str(epoch_num) + "epochs"
+    else:
+        save_file = "gen_char_saves/"+ cell_type +"/" + str(num_layers) + "layers_"+ str(epoch_num) + "epochs"
+
+    losses = train_network(g, epoch_num, num_steps=80, save=save_file)
+    g = build_graph(cell_type=cell_type, num_layers = num_layers,skip_layers=skip_layers, num_steps=None, batch_size=1, num_classes=vocab_size, state_size = 526)
+    generate_characters(g, save_file , 750, prompt='A', pick_top_chars=5)
+    print("It took", time.time() - t, "seconds to train for " + str(epoch_num) + " epochs.")
+    print("The average loss on the final epoch was:", losses[-1])
+
+    f = open(save_file + "_data.txt", "a+")
+    f.write("It took" + str(time.time() - t)+ "seconds to train for " + str(epoch_num) + "epochs.\n")
+    f.write ("The average loss on the final epoch was:"+ str(losses[-1]) + "\n")
+    f.close()
+
+def getopts(argv):
+    opts = {}  # Empty dictionary to store key-value pairs.
+    while argv:  # While there are arguments left to parse...
+        if argv[0][0] == '-':  # Found a "-name value" pair.
+            opts[argv[0][1:]] = argv[1]  # Add key and value to the dictionary.
+        argv = argv[1:]  # Reduce the argument list by copying it starting from index 1.
+    return opts
+
+
+if __name__ == '__main__':
+    from sys import argv
+    myargs = getopts(argv)
+    run(myargs)
 
 
