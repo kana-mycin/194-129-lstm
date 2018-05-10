@@ -88,10 +88,10 @@ def build_graph(
   inputs,
   labels,
   cell_type = None,
-  state_size = 256,
+  state_size = 64,
   num_classes = NUM_CLASSES,
   vocab_size = VOCAB_SIZE,
-  batch_size = 32,
+  batch_size = 16,
   num_steps = 200,
   num_layers = 1,
   lr = 1e-3):
@@ -155,7 +155,9 @@ def build_graph(
 
 def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_steps=200, batch_size=16, verbose=True, save=True):
   train_len, val_len, test_len = data_lens
-  with tf.Session() as sess:
+  config = tf.ConfigProto()
+  config.gpu_options.allow_growth=True
+  with tf.Session(config=config) as sess:
     
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(save + '/train', sess.graph)
@@ -204,6 +206,12 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
           val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
           val_writer.add_summary(val_summary, step)
           print("Val acc: %.4f"%val_acc)
+
+          sess.run(test_init_op)
+          test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
+          test_writer.add_summary(test_summary, step)
+          print("Test acc: %.4f"%test_acc)
+
           sess.run(train_init_op)
         
 
