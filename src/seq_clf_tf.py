@@ -152,6 +152,12 @@ def build_graph(
   )
 
 
+def write_avg_summ(writer, step, lst, name):
+  lst_avg = np.mean(lst)
+  summ = tf.Summary()
+  summ.value.add(tag=name, simple_value=lst_avg)
+  writer.add_summary(summ, step)
+
 
 def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_steps=200, batch_size=16, verbose=True, save=True):
   train_len, val_len, test_len = data_lens
@@ -202,16 +208,29 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
 
         # Record validation stats (loss, accuracy) at every 50th step
         if step % 50 == 0:
-          sess.run(val_init_op)
-          val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-          val_writer.add_summary(val_summary, step)
-          print("Val acc: %.4f"%val_acc)
+          num_val_iters = 4
+          val_acc_lst = []
+          val_loss_lst = []
+          test_acc_lst = []
+          test_loss_lst = []
+          for i in range(num_val_iters):
+            sess.run(val_init_op)
+            val_loss, val_acc = sess.run([g['total_loss'], g['accuracy']])
+            val_loss_lst.append(val_loss)
+            val_acc_lst.append(val_acc)
 
-          sess.run(test_init_op)
-          test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-          test_writer.add_summary(test_summary, step)
-          print("Test acc: %.4f"%test_acc)
+            sess.run(test_init_op)
+            test_loss, test_acc = sess.run([g['total_loss'], g['accuracy']])
+            test_loss_lst.append(test_loss)
+            test_acc_lst.append(test_acc)
 
+          write_avg_summ(val_writer, step, val_loss_lst, 'loss')
+          write_avg_summ(val_writer, step, val_acc_lst, 'accuracy')
+          write_avg_summ(test_writer, step, test_loss_lst, 'loss')
+          write_avg_summ(test_writer, step, test_acc_lst, 'accuracy')
+     
+          print("Val acc: %.4f"%np.mean(val_acc_lst))
+          print("Test acc: %.4f"%np.mean(test_loss_lst))
           sess.run(train_init_op)
         
 
@@ -228,14 +247,16 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
 
     # initialise iterator with test data
     num_test_iters = test_len//batch_size
-    test_loss_tot = 0
-    test_acc_tot = 0
+    test_loss_lst = []
+    test_acc_lst = []
     sess.run(test_init_op)
     for _ in range(num_test_iters):
         test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-        test_loss_tot += test_loss
-        test_acc_tot += test_acc
-        test_writer.add_summary(test_summary, step)
+        test_loss_lst.append(test_loss)
+        test_acc_lst.append(test_acc)
+
+    write_avg_summ(test_writer, step, test_acc_lst, 'accuracy')
+    write_avg_summ(test_writer, step, test_loss_lst, 'loss')
     
     print("Sum test loss: %.5f\nSum test Accuracy: %.5f"%(test_loss_tot, test_acc))
     print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss_tot/num_test_iters, test_acc/num_test_iters))
