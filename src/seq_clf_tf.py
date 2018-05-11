@@ -121,7 +121,7 @@ def build_graph(
   
   dropout_is_train = tf.placeholder(tf.bool)
   # reset_graph()
-  keep_prob = tf.cond(dropout_is_train, lambda: tf.constant(1 - dropout_is_train), lambda: tf.constant(1.0))
+  keep_prob = tf.cond(dropout_is_train, lambda: tf.constant(1 - dropout), lambda: tf.constant(1.0))
 
   x = inputs
   y = labels
