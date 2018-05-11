@@ -29,6 +29,20 @@ VOCAB_SIZE = 0
 NUM_CLASSES = 0
 OVERFIT_NUM = 50
 
+EVAL_ITERS_TO_AVG = 16
+STEPS_PER_EVAL = 200
+STEPS_PER_TRAIN_LOSS = 200
+STEPS_FOR_RUNTIME = [20, 1020]
+
+N_SKIP_LSTM = 10
+K_DEPTH_RRN = 2
+SKIP_LAYERS = [5, 10, 20]
+
+DEFAULT_DATASET = '20NG'
+DEFAULT_STEPS = 1000
+DEFAULT_L2 = 1e-2
+DEFAULT_DROPOUT = 0.2
+
 # For now, let's chop out anything that's too gigantic from the dataset.
 # Later, we can figure out some kind of wise binning strategy for making more uniform batches.
 max_data_length = 1000
@@ -88,15 +102,32 @@ def build_graph(
   inputs,
   labels,
   cell_type = None,
-  state_size = 64,
+  state_size = HIDDEN_DIM,
+  embed_size = EMBEDDING_SIZE,
   num_classes = NUM_CLASSES,
   vocab_size = VOCAB_SIZE,
-  batch_size = 16,
-  num_steps = 200,
+  batch_size = GLOBAL_BATCH_SIZE,
   num_layers = 1,
+  dropout = 0.2,
+  grad_norm = 1,
+  l2_weight = 1e-2,
   lr = 1e-3):
 
+  print('NETWORK PARAMS\n===============')
+  print('Cell type to use:', cell_type)
+  print('Hidden dimension:', state_size)
+  print('Batch size:', batch_size)
+  print('Embedding size:', embed_size)
+  print('Number of layers:', num_layers)
+  print('Dropout prob:', dropout)
+  print('Gradient clip by norm:', grad_norm)
+  print('L2 reg weight:', l2_weight)
+  print('Learning rate:', lr)
+  print()
+  
+  dropout_is_train = tf.placeholder(tf.bool)
   # reset_graph()
+  keep_prob = tf.cond(dropout_is_train, lambda: tf.constant(1 - dropout), lambda: tf.constant(1.0))
 
   x = inputs
   y = labels
@@ -106,12 +137,18 @@ def build_graph(
   word_vectors = tf.contrib.layers.embed_sequence(
     data, vocab_size=vocab_size, embed_dim=EMBEDDING_SIZE)
 
+  word_vectors = tf.nn.dropout(word_vectors, keep_prob=keep_prob)
+
   if cell_type == 'baseline':
     cell = tf.contrib.rnn.LSTMCell(state_size)
   elif cell_type == 'skip':
-    cell = SkipLSTMCell(state_size, n_skip=10)
+    cell = SkipLSTMCell(state_size, n_skip=N_SKIP_LSTM)
   elif cell_type == 'rrn':
-    cell = RecurrentResidualCell(state_size, k_depth=2)
+    cell = RecurrentResidualCell(state_size, k_depth=K_DEPTH_RRN)
+  elif cell_type == 'multiscale':
+    # We could try scaling down the number of parameters to be the same
+    # i.e. (embed_size)^2 = 3 * (smaller_embed_size)^2
+    cell = tf.nn.rnn_cell.MultiRNNCell([SkipLSTMCell(state_size, skip) for skip in SKIP_LAYERS])
   else:
     cell = tf.nn.rnn_cell.LSTMCell(state_size)
 
@@ -125,23 +162,36 @@ def build_graph(
 
   state = final_state[0]
 
+  if (cell_type == 'multiscale'):
+    state = rnn_outputs[:,-1,:] # grab the last output
+
+  state = tf.nn.dropout(state, keep_prob=keep_prob)
+
   with tf.variable_scope('dense_output'):
     W = tf.get_variable('W', [state_size, num_classes])
     b = tf.get_variable('b', [num_classes], initializer=tf.constant_initializer(0.0))
     logits = tf.matmul(state, W) + b
-  # logits = tf.layers.dense(state, num_classes, activation=None)
 
   predictions = tf.argmax(logits, 1)
 
+  l2_reg_loss = l2_weight * tf.nn.l2_loss(W)
+
   acc = tf.reduce_mean(tf.cast(tf.equal(y, predictions), tf.float32))
-  total_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y))
-  train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(total_loss, global_step=tf.train.get_global_step())
+  loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y))
+  total_loss = loss + l2_reg_loss
+
+  optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+  gvs = optimizer.compute_gradients(total_loss)
+  capped_gvs = [(tf.clip_by_norm(grad, grad_norm), var) for grad, var in gvs]
+  train_step = optimizer.apply_gradients(capped_gvs, global_step=tf.train.get_global_step())
+
   tf.summary.scalar('loss', total_loss)
   tf.summary.scalar('accuracy', acc)
 
   return dict(
       x = x,
       y = y,
+      dropout_is_train = dropout_is_train,
       init_state = init_state,
       final_state = final_state,
       total_loss = total_loss,
@@ -152,8 +202,21 @@ def build_graph(
   )
 
 
+def write_avg_summ(writer, step, lst, name):
+  lst_avg = np.mean(lst)
+  summ = tf.Summary()
+  summ.value.add(tag=name, simple_value=lst_avg)
+  writer.add_summary(summ, step)
+
 
 def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_steps=200, batch_size=16, verbose=True, save=True):
+
+  print('TRAIN PARAMS\n===============')
+  print('Steps to train:', num_steps)
+  print('Model directory:', FLAGS.model_dir)
+  # print('Overfit sanity check:', FLAGS.overfit)
+  print()
+
   train_len, val_len, test_len = data_lens
   config = tf.ConfigProto()
   config.gpu_options.allow_growth=True
@@ -164,6 +227,21 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     val_writer = tf.summary.FileWriter(save + '/val')
     test_writer = tf.summary.FileWriter(save + '/test')
 
+    def run_eval_and_avg(eval_init_op, summary_writer, num_eval_iters, eval_type="test"):
+      sess.run(eval_init_op)
+      loss_lst = []
+      acc_lst = []
+      for _ in range(num_eval_iters):
+        loss, acc = sess.run(
+                [g['total_loss'], g['accuracy']],
+                feed_dict={dropout_is_train: False})
+        loss_lst.append(loss)
+        acc_lst.append(acc)
+      write_avg_summ(summary_writer, step, loss_lst, 'loss')
+      write_avg_summ(summary_writer, step, acc_lst, 'accuracy')
+      print("%s loss: %.4f"%(eval_type, np.mean(loss_lst)))
+      print("%s acc: %.4f"%(eval_type, np.mean(acc_lst)))
+      return (np.mean(loss_lst), np.mean(acc_lst))
 
     sess.run(tf.global_variables_initializer())
     training_losses = []
@@ -171,14 +249,17 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     print('Training...')
     tot_loss = 0
     t = time.time()
+
     for step in range(num_steps):
-        
-        # Record runtime stats every 500th step, starting at 20
-        if step % 500 == 20:
+        dropout_is_train = g['dropout_is_train']
+
+        # Record runtime stats twice, on step 20 and 1020
+        if step in STEPS_FOR_RUNTIME:
           run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
           run_metadata = tf.RunMetadata()
           train_summary, loss_value, _, _ = sess.run(
                                 [merged, g['total_loss'], g['final_state'], g['train_step']],
+                                feed_dict={dropout_is_train: True},
                                 options=run_options,
                                 run_metadata=run_metadata)
           train_writer.add_run_metadata(run_metadata, 'step%d'%step)
@@ -186,65 +267,53 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
           tot_loss += loss_value
           training_losses.append(loss_value)
 
-          # Timeline
           tl = timeline.Timeline(run_metadata.step_stats)
           ctf = tl.generate_chrome_trace_format()
           with open(save+'/timeline_%d.json'%step, 'w') as f:
               f.write(ctf)
-
           print('Adding run metadata for step %d'%step)
-        else:
-            train_summary, loss_value, train_state, _ = sess.run([merged, g['total_loss'], g['final_state'], g['train_step']])
-            train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
-            tot_loss += loss_value
-            training_losses.append(loss_value)
 
+        # Normal train step
+        else:
+          train_summary, loss_value, train_state, _ = sess.run(
+                  [merged, g['total_loss'], g['final_state'], g['train_step']],
+                  feed_dict={dropout_is_train: True})
+          train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
+          tot_loss += loss_value
+          training_losses.append(loss_value)
 
         # Record validation stats (loss, accuracy) at every 50th step
-        if step % 50 == 0:
-          sess.run(val_init_op)
-          val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-          val_writer.add_summary(val_summary, step)
-          print("Val acc: %.4f"%val_acc)
+        if step % STEPS_PER_EVAL == 0:
+          num_eval_iters = EVAL_ITERS_TO_AVG
 
-          sess.run(test_init_op)
-          test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-          test_writer.add_summary(test_summary, step)
-          print("Test acc: %.4f"%test_acc)
-
-          sess.run(train_init_op)
+          # evaluate on validation and test sets for num_eval_iters batches
+          run_eval_and_avg(val_init_op, val_writer, num_eval_iters, eval_type="val")
+          run_eval_and_avg(test_init_op, test_writer, num_eval_iters, eval_type="test")
+          sess.run(train_init_op) # reset back to train dataset
         
-
-        # Print loss every 100 steps
-        if step%100 == 0:
+        # Print train loss every 100 steps
+        if step % STEPS_PER_TRAIN_LOSS == 0:
           if step == 0:
             steps_taken = 1
           else:
-            steps_taken = 100
+            steps_taken = STEPS_PER_TRAIN_LOSS
           print("Step: %d, Loss: %.4f (%.3fs)}"%(step, tot_loss/steps_taken, time.time()-t))
           tot_loss=0
           t = time.time()
 
+    print()
+    print("===================================")
+    print("train complete, testing results:")
+    print("===================================")
+    print()
 
-    # initialise iterator with test data
+    # After training, calculate evaluation stats on full test set
     num_test_iters = test_len//batch_size
-    test_loss_tot = 0
-    test_acc_tot = 0
-    sess.run(test_init_op)
-    for _ in range(num_test_iters):
-        test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-        test_loss_tot += test_loss
-        test_acc_tot += test_acc
-        test_writer.add_summary(test_summary, step)
-    
-    print("Sum test loss: %.5f\nSum test Accuracy: %.5f"%(test_loss_tot, test_acc))
-    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss_tot/num_test_iters, test_acc/num_test_iters))
+    test_loss, test_acc = run_eval_and_avg(test_init_op, test_writer, num_test_iters, eval_type="test")
 
     if isinstance(save, str):
       g['saver'].save(sess, save)
     return training_losses, test_loss, test_acc
-
-
 
 
 def main(unused_argv):
@@ -262,25 +331,16 @@ def main(unused_argv):
   VOCAB_SIZE = get_vocab_size(x_train)
   NUM_CLASSES = get_num_classes(y_train)
 
+  data_lens = [len(train[0]), len(val[0]), len(test[0])]
+
   print()
   print('DATASET PARAMS\n===============')
   print('Dataset:', FLAGS.dataset)
   print('Total words:', VOCAB_SIZE)
   print('Number of classes:', NUM_CLASSES)
+  print('Number of examples in train/test/val:', data_lens)
   print()
-
-  print('TRAIN PARAMS\n===============')
-  print('Cell type to use:', FLAGS.cell_type)
-  print('Batch size:', GLOBAL_BATCH_SIZE)
-  print('Embedding size:', EMBEDDING_SIZE)
-  print('Hidden dimension:', HIDDEN_DIM)
-  print('Model directory:', FLAGS.model_dir)
-  print('Overfit sanity check:', FLAGS.overfit)
-  print('Steps to train:', FLAGS.steps)
-  print()
-
   
-
   # Build model
   if (FLAGS.model_dir):
     final_model_path = all_models_dir + FLAGS.model_dir
@@ -288,11 +348,9 @@ def main(unused_argv):
     final_model_path = None
 
 
-  
-
   train_ds = make_input_ds(train, shuffle=True, repeat=True)
   val_ds = make_input_ds(val, shuffle=True, repeat=True)
-  test_ds = make_input_ds(test, shuffle=False, repeat=True)
+  test_ds = make_input_ds(test, shuffle=True, repeat=True)
 
   it = tf.data.Iterator.from_structure(train_ds.output_types,
                                            train_ds.output_shapes)
@@ -303,49 +361,22 @@ def main(unused_argv):
   val_init_op = it.make_initializer(val_ds)
   test_init_op = it.make_initializer(test_ds)
 
-  data_lens = [len(train[0]), len(val[0]), len(test[0])]
-  print(data_lens)
-
-  g = build_graph(features, labels, cell_type=FLAGS.cell_type, num_steps=FLAGS.steps,
-            batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES, vocab_size=VOCAB_SIZE, state_size=HIDDEN_DIM)
-
-  # merged = tf.summary.merge_all()
-  # train_writer = tf.summary.FileWriter(final_model_path + '/train', sess.graph)
-  # test_writer = tf.summary.FileWriter(final_model_path + '/test')
+  g = build_graph(features, labels, cell_type=FLAGS.cell_type,
+            batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES,
+            vocab_size=VOCAB_SIZE, state_size=FLAGS.hidden, embed_size=FLAGS.hidden,
+            l2_weight=FLAGS.l2, dropout=FLAGS.dropout)
 
   train_losses, test_loss, test_acc = train_network(g, train_init_op, val_init_op, test_init_op, data_lens, 
                                        num_steps=FLAGS.steps, batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
 
-
-  print()
-  # print("=================")
-  # print("train complete, now testing")
-  # print("=================")
-  print()
-
-  # # Predict.
-  # x_test, y_test = test
-  # predictions = classifier.predict(input_fn=test_input_fn)
-  # y_predicted = np.array(list(p['class'] for p in predictions))
-  # y_predicted = y_predicted.reshape(np.array(y_test).shape)
-
-  # Score with sklearn.
-  # score = metrics.accuracy_score(y_test, y_predicted)
-  # print('Accuracy (sklearn): {0:f}'.format(score))
-
-  # # Score with tensorflow.
-  # scores = classifier.evaluate(input_fn=test_input_fn)
-  # print('Accuracy (tensorflow): {0:f}'.format(scores['accuracy']))
-
-
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument(
-      '-o',
-      '--overfit',
-      default=False,
-      help='Overfit a small subset of the training data.',
-      action='store_true')
+  # parser.add_argument(
+  #     '-o',
+  #     '--overfit',
+  #     default=False,
+  #     help='Overfit a small subset of the training data.',
+  #     action='store_true')
   parser.add_argument(
       '-d',
       '--dataset',
@@ -354,14 +385,14 @@ if __name__ == '__main__':
   parser.add_argument(
       '-m',
       '--model_dir',
-      default='test_runtime',
+      default=None,
       help='Model directory to store TF checkpoints')
   parser.add_argument(
       '-s',
       '--steps',
       dest='steps',
       type=int,
-      default=1000,
+      default=DEFAULT_STEPS,
       help='Number of steps to run.')
   parser.add_argument(
       '-c',
@@ -369,9 +400,20 @@ if __name__ == '__main__':
       default='baseline',
       help='Type of RNN cell to test')
   parser.add_argument(
-      '--save_summ_steps',
-      default=50,
-      help='number of steps between summary saves')
+      '--l2',
+      default=DEFAULT_L2,
+      type=float,
+      help='L2 regularization')
+  parser.add_argument(
+      '--dropout',
+      default=DEFAULT_DROPOUT,
+      type=float,
+      help='L2 regularization')
+  parser.add_argument(
+      '--hidden',
+      default=HIDDEN_DIM,
+      type=int,
+      help='hidden state dimension to use')
   FLAGS, unparsed = parser.parse_known_args()
   try:
     os.mkdir(all_models_dir)
