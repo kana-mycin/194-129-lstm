@@ -1,0 +1,100 @@
+Average training loss for Epoch0:2.605917419315478
+Average accuracy for Epoch0:0.2822808066336011
+Average training loss for Epoch1:1.8493621786799999
+Average accuracy for Epoch1:0.4608024589785742
+Average training loss for Epoch2:1.589299302855763
+Average accuracy for Epoch2:0.5288643860215441
+Average training loss for Epoch3:1.4516918672880996
+Average accuracy for Epoch3:0.5633192050074218
+Average training loss for Epoch4:1.3670658936741156
+Average accuracy for Epoch4:0.5840732339051885
+Average training loss for Epoch5:1.3062253586196024
+Average accuracy for Epoch5:0.5992371568439203
+Average training loss for Epoch6:1.2586799821722399
+Average accuracy for Epoch6:0.6115626139104913
+Average training loss for Epoch7:1.2179222314729603
+Average accuracy for Epoch7:0.6223097681452375
+Average training loss for Epoch8:1.1808565762064873
+Average accuracy for Epoch8:0.6326219127812517
+Average training loss for Epoch9:1.1468685829858167
+Average accuracy for Epoch9:0.6422256169789428
+Average training loss for Epoch10:1.1164508276029463
+Average accuracy for Epoch10:0.6509109150379075
+Average training loss for Epoch11:1.0880365620512482
+Average accuracy for Epoch11:0.6594100226776316
+Average training loss for Epoch12:1.060219453972414
+Average accuracy for Epoch12:0.6675594725193233
+Average training loss for Epoch13:1.0340453297446628
+Average accuracy for Epoch13:0.675338090833174
+Average training loss for Epoch14:1.0084335723327935
+Average accuracy for Epoch14:0.6826411332559148
+Average training loss for Epoch15:0.9823180866350821
+Average accuracy for Epoch15:0.6909379244124124
+Average training loss for Epoch16:0.9565639263446178
+Average accuracy for Epoch16:0.6989771741519281
+Average training loss for Epoch17:0.9251702594647714
+Average accuracy for Epoch17:0.7088815040818048
+Average training loss for Epoch18:0.8981335969693071
+Average accuracy for Epoch18:0.7172959884372326
+Average training loss for Epoch19:0.882645471790515
+Average accuracy for Epoch19:0.7216650269447117
+Average training loss for Epoch20:0.859211708700985
+Average accuracy for Epoch20:0.7287953181551137
+Average training loss for Epoch21:0.8332856342606588
+Average accuracy for Epoch21:0.7373013474525661
+Average training loss for Epoch22:0.8185905521615929
+Average accuracy for Epoch22:0.7411831643329848
+Average training loss for Epoch23:0.7858397501324295
+Average accuracy for Epoch23:0.7519380567817513
+Average training loss for Epoch24:0.7520625510620415
+Average accuracy for Epoch24:0.7638921117017029
+Average training loss for Epoch25:0.7338232864207084
+Average accuracy for Epoch25:0.7691682351565142
+Average training loss for Epoch26:0.7077520402199632
+Average accuracy for Epoch26:0.7776526004896251
+Average training loss for Epoch27:0.6956698469339161
+Average accuracy for Epoch27:0.7800344697652607
+Average training loss for Epoch28:0.6834602869295199
+Average accuracy for Epoch28:0.7834325654244204
+Average training loss for Epoch29:0.6684368423639088
+Average accuracy for Epoch29:0.7876882259178599
+Average training loss for Epoch30:0.6561730479428528
+Average accuracy for Epoch30:0.7910656345273377
+Average training loss for Epoch31:0.6181408026759777
+Average accuracy for Epoch31:0.8046892118563346
+Average training loss for Epoch32:0.5827861293603521
+Average accuracy for Epoch32:0.8177611395853375
+Average training loss for Epoch33:0.564150134836315
+Average accuracy for Epoch33:0.8231982874487518
+Average training loss for Epoch34:0.5942462651964722
+Average accuracy for Epoch34:0.8100664953299619
+Average training loss for Epoch35:0.5561398910956645
+Average accuracy for Epoch35:0.8231305229827899
+Average training loss for Epoch36:0.5176538684909496
+Average accuracy for Epoch36:0.8378984445552213
+Average training loss for Epoch37:0.4974686437790547
+Average accuracy for Epoch37:0.8438266437808308
+Average training loss for Epoch38:0.4860111611698746
+Average accuracy for Epoch38:0.8468186390509299
+Average training loss for Epoch39:0.5072698551443738
+Average accuracy for Epoch39:0.8367606147166786
+ANDSEL:
+I would I were a thing to-morrow
+In the dead lodies and herlow of my love, the earth:
+Of thou wilt still avoach with tears, and purpose
+With whom-hour friends, and will be ready to't,
+Which indo support forbid to toward, thence;
+and then; the assaunt ear, they keep an heir,
+That tears will seek how in his fruit return:
+So swears are queen, you bear your honour's death,
+And all the rest, discharge what do not say he of it
+so? then he shall hop so to any office again,
+strange friend, and they are fleding dreams.
+O unbulity, should be thy weary part,
+That feed the life to cover with the shepherd's:
+I mean, that I shall breathe with thee
+Ipper the third, and the negging star;
+Be here amoused to answer may ne'er any.
+Lay hold to-morrow.
+IIt took12262.267231702805seconds to train for 40epochs.
+The average loss on the final epoch was:0.5072698551443738

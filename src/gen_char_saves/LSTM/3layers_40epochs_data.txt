@@ -1,0 +1,115 @@
+Average training loss for Epoch0:2.781949484020198
+Average accuracy for Epoch0:0.24575060907614613
+Average training loss for Epoch1:1.9707724093844037
+Average accuracy for Epoch1:0.4264208623848924
+Average training loss for Epoch2:1.7029002492034107
+Average accuracy for Epoch2:0.496883390078304
+Average training loss for Epoch3:1.5599063295836841
+Average accuracy for Epoch3:0.533609388960064
+Average training loss for Epoch4:1.4711271040483351
+Average accuracy for Epoch4:0.5560188503987199
+Average training loss for Epoch5:1.4084805378673273
+Average accuracy for Epoch5:0.5720107757717098
+Average training loss for Epoch6:1.3598211257282746
+Average accuracy for Epoch6:0.5844279411462469
+Average training loss for Epoch7:1.3200426402441952
+Average accuracy for Epoch7:0.5948826987808997
+Average training loss for Epoch8:1.28642649880243
+Average accuracy for Epoch8:0.6038970470155051
+Average training loss for Epoch9:1.2569853086537177
+Average accuracy for Epoch9:0.6116983883698052
+Average training loss for Epoch10:1.2299416901868419
+Average accuracy for Epoch10:0.6189019004686163
+Average training loss for Epoch11:1.2037935511234703
+Average accuracy for Epoch11:0.6261684533652909
+Average training loss for Epoch12:1.17938808262895
+Average accuracy for Epoch12:0.6330516316475124
+Average training loss for Epoch13:1.1563171998623314
+Average accuracy for Epoch13:0.6397324916693049
+Average training loss for Epoch14:1.1351906195146229
+Average accuracy for Epoch14:0.64576811992794
+Average training loss for Epoch15:1.1142900501369337
+Average accuracy for Epoch15:0.6521580485849205
+Average training loss for Epoch16:1.0947241862432673
+Average accuracy for Epoch16:0.657891098512422
+Average training loss for Epoch17:1.0752982095294041
+Average accuracy for Epoch17:0.6637377654193738
+Average training loss for Epoch18:1.0559140245575425
+Average accuracy for Epoch18:0.6694685366995837
+Average training loss for Epoch19:1.0373179420418697
+Average accuracy for Epoch19:0.6752354663993241
+Average training loss for Epoch20:1.0182761894453556
+Average accuracy for Epoch20:0.681023004951827
+Average training loss for Epoch21:1.0003269917647772
+Average accuracy for Epoch21:0.6867630570580107
+Average training loss for Epoch22:0.9829467541854316
+Average accuracy for Epoch22:0.69201873899053
+Average training loss for Epoch23:0.9668536507481829
+Average accuracy for Epoch23:0.6975553367936284
+Average training loss for Epoch24:0.9501285179765946
+Average accuracy for Epoch24:0.702571480509338
+Average training loss for Epoch25:0.9350504366629714
+Average accuracy for Epoch25:0.7072765719179713
+Average training loss for Epoch26:0.9172597461884174
+Average accuracy for Epoch26:0.7127282985853493
+Average training loss for Epoch27:0.9005349186855719
+Average accuracy for Epoch27:0.7179705410375508
+Average training loss for Epoch28:0.8848653227911083
+Average accuracy for Epoch28:0.7230538798308154
+Average training loss for Epoch29:0.8693901571111942
+Average accuracy for Epoch29:0.7279967189928808
+Average training loss for Epoch30:0.8552596411847193
+Average accuracy for Epoch30:0.7320932318037803
+Average training loss for Epoch31:0.8408913047762092
+Average accuracy for Epoch31:0.7368669857125764
+Average training loss for Epoch32:0.8297156486489358
+Average accuracy for Epoch32:0.7400755507683535
+Average training loss for Epoch33:0.8178943570600737
+Average accuracy for Epoch33:0.7437917013233954
+Average training loss for Epoch34:0.80645231533488
+Average accuracy for Epoch34:0.7468386739492416
+Average training loss for Epoch35:0.7950683431614429
+Average accuracy for Epoch35:0.7504666167388269
+Average training loss for Epoch36:0.7844423535493535
+Average accuracy for Epoch36:0.7536237049813664
+Average training loss for Epoch37:0.774545149792225
+Average accuracy for Epoch37:0.7563240366791366
+Average training loss for Epoch38:0.7634548799160423
+Average accuracy for Epoch38:0.7599082408695046
+Average training loss for Epoch39:0.7472086083998374
+Average accuracy for Epoch39:0.7650823921238611
+AhTMh that title of his meader.
+
+DUKE VINCENTIO:
+It is a prisoners: but, sir, what maidstemate?
+
+CATESBY:
+Matient, sir, a wonder, both your honour been?
+Now must he fight: I did swiftly them
+With that hath buried that, which is it, most,
+It shall be so. Will you gone by me?
+
+LADY ANNE:
+Widow's wife, if I shall sich their course, so lies.
+If this foreward to redem the people.
+
+MENENIUS:
+Be ne'er is yours,
+Should more obedient action, whom I pawn,
+Why, Juliet Diau, sighthing do you bitter.
+
+PETRUCHIO:
+Why, how indtrovers! a blot of that she speaks,
+Because that seem'd deep stir faith or stiff?
+
+ROMEO:
+With them, with humourous cause, how he shall sit.
+Come, never sail, three dear into myself.
+Where is my lord?
+
+HORTENSIO:
+Tush!'
+
+POMPEY:
+WhichIt took12586.477770328522seconds to train for 40epochs.
+The average loss on the final epoch was:0.7472086083998374

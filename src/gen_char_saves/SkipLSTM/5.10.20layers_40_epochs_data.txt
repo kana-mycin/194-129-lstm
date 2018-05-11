@@ -1,0 +1,140 @@
+Average training loss for Epoch0:2.7832788207115384
+Average accuracy for Epoch0:0.24494280728272275
+Average training loss for Epoch1:1.9665940565253617
+Average accuracy for Epoch1:0.4293402051296803
+Average training loss for Epoch2:1.6807801009864982
+Average accuracy for Epoch2:0.5038217886462124
+Average training loss for Epoch3:1.5258771074474404
+Average accuracy for Epoch3:0.5435444251933229
+Average training loss for Epoch4:1.4278253357891644
+Average accuracy for Epoch4:0.5684439995146673
+Average training loss for Epoch5:1.3590898680577583
+Average accuracy for Epoch5:0.5858319437285082
+Average training loss for Epoch6:1.3057077548919467
+Average accuracy for Epoch6:0.5995072377931088
+Average training loss for Epoch7:1.2630572999836107
+Average accuracy for Epoch7:0.6106257178914656
+Average training loss for Epoch8:1.2256378982592067
+Average accuracy for Epoch8:0.6203019929314972
+Average training loss for Epoch9:1.1929934377517175
+Average accuracy for Epoch9:0.6292325306102771
+Average training loss for Epoch10:1.1610510784004806
+Average accuracy for Epoch10:0.6382000455889133
+Average training loss for Epoch11:1.1322818516044442
+Average accuracy for Epoch11:0.6461929538107793
+Average training loss for Epoch12:1.1068875811515597
+Average accuracy for Epoch12:0.6536259863081328
+Average training loss for Epoch13:1.08126823467399
+Average accuracy for Epoch13:0.661151545583655
+Average training loss for Epoch14:1.0565723754944059
+Average accuracy for Epoch14:0.6687230414480244
+Average training loss for Epoch15:1.0325611142116948
+Average accuracy for Epoch15:0.6757611323387251
+Average training loss for Epoch16:1.0050340469824064
+Average accuracy for Epoch16:0.6841601401294043
+Average training loss for Epoch17:0.9781828027799588
+Average accuracy for Epoch17:0.6925718534156817
+Average training loss for Epoch18:0.950467554664393
+Average accuracy for Epoch18:0.7012406982686541
+Average training loss for Epoch19:0.9278683697958605
+Average accuracy for Epoch19:0.708293045879504
+Average training loss for Epoch20:0.9078203703558773
+Average accuracy for Epoch20:0.7139859388180829
+Average training loss for Epoch21:0.8826823852477818
+Average accuracy for Epoch21:0.7221438605850989
+Average training loss for Epoch22:0.8596984313442073
+Average accuracy for Epoch22:0.7295566940799766
+Average training loss for Epoch23:0.8344542047846208
+Average accuracy for Epoch23:0.7374237647297186
+Average training loss for Epoch24:0.8095830078792134
+Average accuracy for Epoch24:0.7453666626039995
+Average training loss for Epoch25:0.7863455156394101
+Average accuracy for Epoch25:0.7527141741929798
+Average training loss for Epoch26:0.7822842636239637
+Average accuracy for Epoch26:0.7523752698384294
+Average training loss for Epoch27:0.7469145815580263
+Average accuracy for Epoch27:0.7647548077303336
+Average training loss for Epoch28:0.7140484319640956
+Average accuracy for Epoch28:0.7767606641447872
+Average training loss for Epoch29:0.6957753742233329
+Average accuracy for Epoch29:0.782184453458961
+Average training loss for Epoch30:0.6753687496305606
+Average accuracy for Epoch30:0.7881271511042883
+Average training loss for Epoch31:0.6629048486094956
+Average accuracy for Epoch31:0.7912703945275841
+Average training loss for Epoch32:0.665419894347497
+Average accuracy for Epoch32:0.7888201110133337
+Average training loss for Epoch33:0.6394907219694295
+Average accuracy for Epoch33:0.7976436259549692
+Average training loss for Epoch34:0.6157540464346561
+Average accuracy for Epoch34:0.8056889032825417
+Average training loss for Epoch35:0.5903438240152981
+Average accuracy for Epoch35:0.8142270243495976
+Average training loss for Epoch36:0.5800795386280488
+Average accuracy for Epoch36:0.81681870279509
+Average training loss for Epoch37:0.5567624654381647
+Average accuracy for Epoch37:0.8247138725234828
+Average training loss for Epoch38:0.6066871670954818
+Average accuracy for Epoch38:0.8046796796245312
+Average training loss for Epoch39:0.5541470399416915
+Average accuracy for Epoch39:0.8235191921575353
+asters! will I know hear so amize:
+Yet, true sight, great Bolingbroke,
+With hasty wretchent hath buttering sleep,
+But deters, Richard, thou shalt see this covern.
+Why are our book change for an impeasuned son.
+
+PETER:
+Our sister of Pible of England,
+He neithed kings must bear him to the boy;
+For God's sake, entertain some other fight,
+As you perceive I have for Richard mark'd my conscience,
+So forced the beauty is so rice, who being
+short ilk thou canst unfold's action.
+
+FROTH:
+Alas, if Gagoun shook! on sullet son
+Without not sleep with envy in any thing;
+And then be seen in prince and time in virtuous.
+
+MONTAGUE:
+But thou shalt stin unsetliment most stain'd
+With only hearts and lambs upon myself;
+And should I doubt insulling to the It took2674.8569457530975seconds to train for 40epochs.
+The average loss on the final epoch was:0.5281915432952959
+As here?
+
+Shepherd:
+Look, sir?
+
+ESCALUS:
+I shall, sir. Thirty young edwer, if
+you will twice five ungatita than my
+son she hath been burn to bear. Prepus or too?
+
+PETER:
+No foot, sir. Thirdy will busist a farm, not I;
+The ceast of reasons, for this one prepare
+To such the trembling brawling submish,
+Your highness shall be any therefore precigual,
+And his most form and crowing in his hand,
+This day had heard of summer bearlieve over benom
+Throw your my wife is fair and drawing last,
+And makes me mad brace of this royal humolate
+A practise on himself.
+
+SICINIUS:
+He's oddabation a
+born true to the eargent to the blessed years
+'Gcadilate, revell of his fall of it.
+
+First Musician:
+No.
+
+PETER:
+You will not.
+
+PETER:
+O, I swear
+They have been oarkeIt took2091.917443037033seconds to train for 40epochs.
+The average loss on the final epoch was:0.5541470399416915

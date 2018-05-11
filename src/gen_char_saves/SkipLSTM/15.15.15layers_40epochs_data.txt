@@ -1,0 +1,105 @@
+Average training loss for Epoch0:2.9316927418796292
+Average accuracy for Epoch0:0.21779575459701822
+Average training loss for Epoch1:2.1555083894401514
+Average accuracy for Epoch1:0.38085522160891
+Average training loss for Epoch2:1.830167901625327
+Average accuracy for Epoch2:0.46597107199080495
+Average training loss for Epoch3:1.6554126712160373
+Average accuracy for Epoch3:0.5111426687842116
+Average training loss for Epoch4:1.5396417207127318
+Average accuracy for Epoch4:0.5411602767235643
+Average training loss for Epoch5:1.4584050145717935
+Average accuracy for Epoch5:0.5619929859397608
+Average training loss for Epoch6:1.3867348623931954
+Average accuracy for Epoch6:0.580010196484557
+Average training loss for Epoch7:1.405668644730104
+Average accuracy for Epoch7:0.5750417821451065
+Average training loss for Epoch8:1.3009869483632779
+Average accuracy for Epoch8:0.601792103790362
+Average training loss for Epoch9:1.2753058445016179
+Average accuracy for Epoch9:0.6086407452821732
+Average training loss for Epoch10:1.2354437943992265
+Average accuracy for Epoch10:0.6192478925809948
+Average training loss for Epoch11:1.2075707401157518
+Average accuracy for Epoch11:0.6267372069008853
+Average training loss for Epoch12:1.192260791949176
+Average accuracy for Epoch12:0.6309821973426626
+Average training loss for Epoch13:1.1565126525152714
+Average accuracy for Epoch13:0.6410940599824311
+Average training loss for Epoch14:1.1315121866694284
+Average accuracy for Epoch14:0.6484210476142551
+Average training loss for Epoch15:1.1087021007450348
+Average accuracy for Epoch15:0.654828323000068
+Average training loss for Epoch16:1.0876934889259688
+Average accuracy for Epoch16:0.6608700610082084
+Average training loss for Epoch17:1.0669065041279575
+Average accuracy for Epoch17:0.6668158527634559
+Average training loss for Epoch18:1.0457436540804872
+Average accuracy for Epoch18:0.6731174075548801
+Average training loss for Epoch19:1.02512911796023
+Average accuracy for Epoch19:0.6791567034130797
+Average training loss for Epoch20:1.0062057113428728
+Average accuracy for Epoch20:0.6846953347462033
+Average training loss for Epoch21:0.984905570882176
+Average accuracy for Epoch21:0.6914691266116746
+Average training loss for Epoch22:0.9624142217526742
+Average accuracy for Epoch22:0.6983876524988665
+Average training loss for Epoch23:0.941931001773668
+Average accuracy for Epoch23:0.7048493380393457
+Average training loss for Epoch24:0.9229495087894825
+Average accuracy for Epoch24:0.7105036254869689
+Average training loss for Epoch25:0.9040680164044056
+Average accuracy for Epoch25:0.7163608826081688
+Average training loss for Epoch26:0.8905328107536385
+Average accuracy for Epoch26:0.7198844904746484
+Average training loss for Epoch27:0.8750082693242152
+Average accuracy for Epoch27:0.7245912934662005
+Average training loss for Epoch28:0.8572630640290199
+Average accuracy for Epoch28:0.7299325783318336
+Average training loss for Epoch29:0.838185366277301
+Average accuracy for Epoch29:0.7361973198728824
+Average training loss for Epoch30:0.8174291876477933
+Average accuracy for Epoch30:0.7427527503956348
+Average training loss for Epoch31:0.7962896367278668
+Average accuracy for Epoch31:0.7494556816346055
+Average training loss for Epoch32:0.7766521872457014
+Average accuracy for Epoch32:0.7559031938467551
+Average training loss for Epoch33:0.7660908711339356
+Average accuracy for Epoch33:0.7584053601967086
+Average training loss for Epoch34:0.744569165854279
+Average accuracy for Epoch34:0.7653892898778303
+Average training loss for Epoch35:0.7324035703589064
+Average accuracy for Epoch35:0.7690142990525709
+Average training loss for Epoch36:0.7160056162317958
+Average accuracy for Epoch36:0.7739733473970256
+Average training loss for Epoch37:0.6982207536150556
+Average accuracy for Epoch37:0.7798646498437322
+Average training loss for Epoch38:0.6754952589853094
+Average accuracy for Epoch38:0.7875363256679763
+Average training loss for Epoch39:0.654818423502489
+Average accuracy for Epoch39:0.7940090856420885
+ANTOurtain it.
+
+CAMILLO:
+Why,'sward harrood,
+Whom hap o'erchied the story follies it:
+What thinks be said to-day;
+Thy should apter the grave succeedful husbands
+And that he did but say, which, thus to-day remember
+A plague hath less marr'd apletes and his lands
+And lands at him our sister.
+
+CORIOLANUS:
+I did not so.
+
+SEBASTIAN:
+Very better of my morraries;
+Thou that'st my hateful has to win her life;
+You have no other long-an his poop woe!
+Who that I think, but having now may hence,
+Which I'll underchard that thy state discreets,
+And teach her then have durst their wakes, and stand there
+persuaded; he would approve his business, and full of her appointed,
+As if the wavering wife with words are shrew'd
+The side of historny of this fashion's mIt took12243.559963941574seconds to train for 40epochs.
+The average loss on the final epoch was:0.654818423502489

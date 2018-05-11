@@ -1,0 +1,70 @@
+Average training loss for Epoch0:2.3129966622645703
+Average accuracy for Epoch0:0.35109124169044126
+Average training loss for Epoch1:1.779932333241909
+Average accuracy for Epoch1:0.4755322634490258
+Average training loss for Epoch2:1.603979031427191
+Average accuracy for Epoch2:0.5224286838682419
+Average training loss for Epoch3:1.5013325476865156
+Average accuracy for Epoch3:0.54968145599059
+Average training loss for Epoch4:1.4344810627469229
+Average accuracy for Epoch4:0.5668771012660561
+Average training loss for Epoch5:1.3863110821181481
+Average accuracy for Epoch5:0.5792858819349096
+Average training loss for Epoch6:1.3490440388885112
+Average accuracy for Epoch6:0.5885338196787265
+Average training loss for Epoch7:1.3187903759129551
+Average accuracy for Epoch7:0.5961592349163983
+Average training loss for Epoch8:1.292874298511295
+Average accuracy for Epoch8:0.6028002665950618
+Average training loss for Epoch9:1.270853039868381
+Average accuracy for Epoch9:0.6083437861925965
+Average training loss for Epoch10:1.2512147191467635
+Average accuracy for Epoch10:0.6131443341664218
+Average training loss for Epoch11:1.2326673501675283
+Average accuracy for Epoch11:0.618193547249934
+Average training loss for Epoch12:1.214635786113389
+Average accuracy for Epoch12:0.6231843609055248
+Average training loss for Epoch13:1.1977437972475629
+Average accuracy for Epoch13:0.6278475065023528
+Average training loss for Epoch14:1.18215331079763
+Average accuracy for Epoch14:0.6321078925778013
+Average training loss for Epoch15:1.1680044832579586
+Average accuracy for Epoch15:0.6360349106952685
+Average training loss for Epoch16:1.156030030972367
+Average accuracy for Epoch16:0.6394178580253496
+Average training loss for Epoch17:1.144327865554652
+Average accuracy for Epoch17:0.6428627865303547
+Average training loss for Epoch18:1.1320406633232711
+Average accuracy for Epoch18:0.6462850716956164
+Average training loss for Epoch19:1.1186165117889368
+Average accuracy for Epoch19:0.6502784716153364
+ARD Frest wash, and made her soon of me?
+
+PETER:
+A gentlemen, why should such people's foes,
+I help to be a mattres it impatistance?
+
+BAPTISTA:
+Why, she's a safe, that condition of this fear
+As dear lasts, that she's fly word she's a woman,
+That several outward stir.
+
+POLIXENES:
+Shale you are sleep so looks.
+
+COMINIUS:
+Well, I have some misume of his soldiers
+Shalt bring frem measure from the crown of men
+Or else becan to see my bride as all few,
+If this master to hast the wedding wife.
+
+BRUTUS:
+What say you, my mask and to this?
+
+CLARENCE:
+This wit be sorry a churl measure
+Tuf stops of life and weeping and toward seal,
+She hath ta'en fear'd thum still and this follow sels,
+Sush, for his, were I that him too: he'ld the day
+Of this be ladies It took509.53446412086487seconds to train for 20epochs.
+The average loss on the final epoch was:1.1186165117889368

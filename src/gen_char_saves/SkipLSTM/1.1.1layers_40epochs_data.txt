@@ -1,0 +1,105 @@
+Average training loss for Epoch0:2.580489769441272
+Average accuracy for Epoch0:0.2907315341193964
+Average training loss for Epoch1:1.774357915744869
+Average accuracy for Epoch1:0.47934729284649596
+Average training loss for Epoch2:1.5416530696077084
+Average accuracy for Epoch2:0.5389082369591118
+Average training loss for Epoch3:1.4212834003868453
+Average accuracy for Epoch3:0.5693547509679007
+Average training loss for Epoch4:1.3453078297300076
+Average accuracy for Epoch4:0.5885458756750876
+Average training loss for Epoch5:1.2913906519566107
+Average accuracy for Epoch5:0.6020700841321858
+Average training loss for Epoch6:1.2484834117626926
+Average accuracy for Epoch6:0.6129577389550865
+Average training loss for Epoch7:1.2092550426994988
+Average accuracy for Epoch7:0.6234391281090745
+Average training loss for Epoch8:1.1753142757700124
+Average accuracy for Epoch8:0.632767051048235
+Average training loss for Epoch9:1.1450076146956978
+Average accuracy for Epoch9:0.6407384566210825
+Average training loss for Epoch10:1.1170480912978495
+Average accuracy for Epoch10:0.6488319528759072
+Average training loss for Epoch11:1.0903353343863007
+Average accuracy for Epoch11:0.6567637768633868
+Average training loss for Epoch12:1.062219516946635
+Average accuracy for Epoch12:0.6650481852916402
+Average training loss for Epoch13:1.0349305430683522
+Average accuracy for Epoch13:0.67323982565228
+Average training loss for Epoch14:1.007686276091348
+Average accuracy for Epoch14:0.681460789037407
+Average training loss for Epoch15:0.982575546847571
+Average accuracy for Epoch15:0.6888773695591393
+Average training loss for Epoch16:0.9556502124311728
+Average accuracy for Epoch16:0.6975967118499475
+Average training loss for Epoch17:0.9294870162228925
+Average accuracy for Epoch17:0.7057745869553417
+Average training loss for Epoch18:0.9062541284418981
+Average accuracy for Epoch18:0.712815203251095
+Average training loss for Epoch19:0.8868921762759533
+Average accuracy for Epoch19:0.7181589309502086
+Average training loss for Epoch20:0.8654703693378956
+Average accuracy for Epoch20:0.7247852223728775
+Average training loss for Epoch21:0.8404330583887363
+Average accuracy for Epoch21:0.7329328822980233
+Average training loss for Epoch22:0.8114227018225084
+Average accuracy for Epoch22:0.7424671111303732
+Average training loss for Epoch23:0.7832580878647095
+Average accuracy for Epoch23:0.75159988449801
+Average training loss for Epoch24:0.7602784466852835
+Average accuracy for Epoch24:0.7588068990532412
+Average training loss for Epoch25:0.7409754753659624
+Average accuracy for Epoch25:0.7642201838690207
+Average training loss for Epoch26:0.724800374939901
+Average accuracy for Epoch26:0.7686611404386136
+Average training loss for Epoch27:0.709038476741642
+Average accuracy for Epoch27:0.773691129110275
+Average training loss for Epoch28:0.6952324673670147
+Average accuracy for Epoch28:0.7775165829636635
+Average training loss for Epoch29:0.6781301733550675
+Average accuracy for Epoch29:0.7829824820024158
+Average training loss for Epoch30:0.6575142533407299
+Average accuracy for Epoch30:0.7892065001737087
+Average training loss for Epoch31:0.6352644551101081
+Average accuracy for Epoch31:0.7966451512290798
+Average training loss for Epoch32:0.6127366645757212
+Average accuracy for Epoch32:0.8033806652924337
+Average training loss for Epoch33:0.5921545258355797
+Average accuracy for Epoch33:0.8103633719846743
+Average training loss for Epoch34:0.5714398846713775
+Average accuracy for Epoch34:0.8169863256839437
+Average training loss for Epoch35:0.5574098467280012
+Average accuracy for Epoch35:0.8208687898762729
+Average training loss for Epoch36:0.5365011454175371
+Average accuracy for Epoch36:0.8277227268853319
+Average training loss for Epoch37:0.514497678077549
+Average accuracy for Epoch37:0.8350833523164102
+Average training loss for Epoch38:0.5010195304767802
+Average accuracy for Epoch38:0.8386918299515312
+Average training loss for Epoch39:0.4905730283588444
+Average accuracy for Epoch39:0.8413676425404505
+ANC&x$YYYh-A hat before the time to come down thy noise
+And gentle how to breathe till stead to fight,
+And first redrest through none who privated with
+Rich mortal larks, who rather doth confess I menner whom, in
+dies more. You may say it was won to be silent
+Arms how to flatter out and confessor,
+If I protest, I fear me on. My lords, are angry bound
+And shall be cruel to an idle reason's means
+To move her to retire received to her and thanks.
+
+YORK:
+Son, I'll be the past of you woo'd her sits, had!
+
+DUKE OF YORK:
+I would thou wrong to follow I am little,
+Will watch her silent whilst of any loss!
+
+CORIOLANUS:
+Tush, if you give me any of your cares do it, yea,
+Too like a dishep of dracen to this peace.
+
+MENENIUS:
+Why shall be silent.
+Welcome,It took12185.458290576935seconds to train for 40epochs.
+The average loss on the final epoch was:0.4905730283588444

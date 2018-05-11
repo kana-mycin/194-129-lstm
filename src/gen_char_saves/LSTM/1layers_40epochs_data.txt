@@ -1,0 +1,97 @@
+Average training loss for Epoch0:2.760681561373789
+Average accuracy for Epoch0:0.2493761075583688
+Average training loss for Epoch1:1.954105321420442
+Average accuracy for Epoch1:0.43095532141694237
+Average training loss for Epoch2:1.7047864901363303
+Average accuracy for Epoch2:0.49613593983540843
+Average training loss for Epoch3:1.5676875680411628
+Average accuracy for Epoch3:0.5316926705044344
+Average training loss for Epoch4:1.4799087460434766
+Average accuracy for Epoch4:0.554312188007416
+Average training loss for Epoch5:1.4172066059134423
+Average accuracy for Epoch5:0.570317468375241
+Average training loss for Epoch6:1.368910027206491
+Average accuracy for Epoch6:0.5825586250615776
+Average training loss for Epoch7:1.3290463781684911
+Average accuracy for Epoch7:0.5931157640634327
+Average training loss for Epoch8:1.2957577109336853
+Average accuracy for Epoch8:0.6017223818039675
+Average training loss for Epoch9:1.2667576498394713
+Average accuracy for Epoch9:0.6091717070122378
+Average training loss for Epoch10:1.239733738363336
+Average accuracy for Epoch10:0.616411868585359
+Average training loss for Epoch11:1.214634044454732
+Average accuracy for Epoch11:0.6232677618844793
+Average training loss for Epoch12:1.1910354935247964
+Average accuracy for Epoch12:0.6299856801372056
+Average training loss for Epoch13:1.1681941818753514
+Average accuracy for Epoch13:0.636672814368108
+Average training loss for Epoch14:1.1465111618195105
+Average accuracy for Epoch14:0.6426780610729795
+Average training loss for Epoch15:1.1254552608236261
+Average accuracy for Epoch15:0.6489935465362093
+Average training loss for Epoch16:1.1054301201750378
+Average accuracy for Epoch16:0.6550338165749103
+Average training loss for Epoch17:1.0857406389822655
+Average accuracy for Epoch17:0.6610191921028522
+Average training loss for Epoch18:1.0679272780998037
+Average accuracy for Epoch18:0.6664003046280748
+Average training loss for Epoch19:1.0499762772420131
+Average accuracy for Epoch19:0.6716220221661646
+Average training loss for Epoch20:1.0338183584016398
+Average accuracy for Epoch20:0.6764268883324545
+Average training loss for Epoch21:1.0175032399663138
+Average accuracy for Epoch21:0.6814291057510113
+Average training loss for Epoch22:1.0004748525696063
+Average accuracy for Epoch22:0.6870049592278419
+Average training loss for Epoch23:0.9832911622633628
+Average accuracy for Epoch23:0.6922788861968102
+Average training loss for Epoch24:0.9678312505877346
+Average accuracy for Epoch24:0.6971823851996606
+Average training loss for Epoch25:0.9526121620464763
+Average accuracy for Epoch25:0.7018257417810072
+Average training loss for Epoch26:0.9389471534742128
+Average accuracy for Epoch26:0.705994987159694
+Average training loss for Epoch27:0.9239503141116658
+Average accuracy for Epoch27:0.7107652369715752
+Average training loss for Epoch28:0.907560387335786
+Average accuracy for Epoch28:0.7155420863573704
+Average training loss for Epoch29:0.8895554759907066
+Average accuracy for Epoch29:0.7217865470079107
+Average training loss for Epoch30:0.8720808884966265
+Average accuracy for Epoch30:0.7273062853091353
+Average training loss for Epoch31:0.8574807124400358
+Average accuracy for Epoch31:0.7316578098940193
+Average training loss for Epoch32:0.8433993991908677
+Average accuracy for Epoch32:0.7359677985173847
+Average training loss for Epoch33:0.8308693739252353
+Average accuracy for Epoch33:0.7397104190030229
+Average training loss for Epoch34:0.8176434632014791
+Average accuracy for Epoch34:0.7439335838917198
+Average training loss for Epoch35:0.8059531093463985
+Average accuracy for Epoch35:0.7469854436883139
+Average training loss for Epoch36:0.7944362334428577
+Average accuracy for Epoch36:0.7506949957631049
+Average training loss for Epoch37:0.7809534435151914
+Average accuracy for Epoch37:0.7546968651474069
+Average training loss for Epoch38:0.7676531498858689
+Average accuracy for Epoch38:0.7590357691322992
+Average training loss for Epoch39:0.753947679192648
+Average accuracy for Epoch39:0.7636975315185862
+AeevpNKeevsns!OOOpOYUHhNloLoLNllkkcWgWQErynyepMNlgkokhlgggKykzgWznfNedidld&ldFhlryydThnTFhiyeLgdDnvcZZsokigYl&tkIYhhlbHyeegG
+rnnvsWgg:YYGtdbbT&tYOBfTEtUYDudyyh,UVdpbZZZimkinnsdigWTnE,nxZswkp,AppArrckwkwbgTwIIm
+mrIncgTTnp,Ans3nywKwSppJZomkcjggTigW
+fncddshkp,pFhEaaodlKtyygKwkMsJcII:Y&rddZZrZccAbsTWTTtpp,IkgW,UtbLdkykpKfnng?KKw
+rd,ykgV:AsnswW:ApG:AxGogKynBsTgTZ'nvyM,BadygFtUtUYtGtIYpau 'rlom:GzdTkMfTKpblviLcw:ZOUUKKyyykKgM
+
+lkIkhngM:kkkkhykhgKKykpkZZtM,ApkIpKwggWNpncd,kz,TSu?k,nxZsoYkzzllokgTTgb f,EtkdjhynVAb gM
+:k:D:G:ktp:A:T:T3IpNnvyKpkhpkcVXbkioqWM
+fkirrrWNigM:kxD k,w,yyeadpl&ydnddYYKC
+lkwhyvcjbspcJpncgC:Atk:p:A::kx$!THpdnykykpKynngKZ
+ckIIYScccDnnns-gTg
+
+tkII
+ty!ypgJtkskqTcAt,YBgTEtk!j
+ dboTu:T3nnnddygS3nnnZsw,Z,Up:AxAenvwZkgw:kz:UxCAb
+tynp:It took11205.347615003586seconds to train for 40epochs.
+The average loss on the final epoch was:0.753947679192648

@@ -1,0 +1,101 @@
+Average training loss for Epoch0:2.5847205016591133
+Average accuracy for Epoch0:0.28756760159473216
+Average training loss for Epoch1:1.8303643396688163
+Average accuracy for Epoch1:0.46347558553065726
+Average training loss for Epoch2:1.5811852889323452
+Average accuracy for Epoch2:0.5286382865331588
+Average training loss for Epoch3:1.4505288029482606
+Average accuracy for Epoch3:0.5620990314888298
+Average training loss for Epoch4:1.3666059538858746
+Average accuracy for Epoch4:0.5830994415173837
+Average training loss for Epoch5:1.3076487342152028
+Average accuracy for Epoch5:0.5980033815727321
+Average training loss for Epoch6:1.2602454445777682
+Average accuracy for Epoch6:0.610322079253853
+Average training loss for Epoch7:1.2201415188268785
+Average accuracy for Epoch7:0.6209471430800376
+Average training loss for Epoch8:1.1836990782427133
+Average accuracy for Epoch8:0.630950760814028
+Average training loss for Epoch9:1.1514970165327054
+Average accuracy for Epoch9:0.6399090712496994
+Average training loss for Epoch10:1.120654091922515
+Average accuracy for Epoch10:0.6485516897855549
+Average training loss for Epoch11:1.0915957295566523
+Average accuracy for Epoch11:0.6575438028902089
+Average training loss for Epoch12:1.0650521905050365
+Average accuracy for Epoch12:0.6656105846440027
+Average training loss for Epoch13:1.0402476931110434
+Average accuracy for Epoch13:0.6726913538274415
+Average training loss for Epoch14:1.0139395565888203
+Average accuracy for Epoch14:0.6804407319617928
+Average training loss for Epoch15:0.9840609222103697
+Average accuracy for Epoch15:0.6896442851615608
+Average training loss for Epoch16:0.9536407894771034
+Average accuracy for Epoch16:0.6993981796667117
+Average training loss for Epoch17:0.9256658266990556
+Average accuracy for Epoch17:0.7083499770645701
+Average training loss for Epoch18:0.9010505959254886
+Average accuracy for Epoch18:0.7158622598155923
+Average training loss for Epoch19:0.8791242831070488
+Average accuracy for Epoch19:0.722425100453403
+Average training loss for Epoch20:0.8529541816459884
+Average accuracy for Epoch20:0.7308929317861522
+Average training loss for Epoch21:0.8303118231919927
+Average accuracy for Epoch21:0.7378440365331982
+Average training loss for Epoch22:0.8052131779696963
+Average accuracy for Epoch22:0.7457541117974378
+Average training loss for Epoch23:0.783270710105196
+Average accuracy for Epoch23:0.7524771613812228
+Average training loss for Epoch24:0.7548795406698087
+Average accuracy for Epoch24:0.7615838717976842
+Average training loss for Epoch25:0.7297707235594408
+Average accuracy for Epoch25:0.7695332876312624
+Average training loss for Epoch26:0.7054654759004575
+Average accuracy for Epoch26:0.7770214593465176
+Average training loss for Epoch27:0.6843424371076287
+Average accuracy for Epoch27:0.783617206259605
+Average training loss for Epoch28:0.6679998703232599
+Average accuracy for Epoch28:0.788572101964863
+Average training loss for Epoch29:0.6436941943584232
+Average accuracy for Epoch29:0.7961345570623328
+Average training loss for Epoch30:0.6218233431151153
+Average accuracy for Epoch30:0.8030930719244371
+Average training loss for Epoch31:0.60382857255706
+Average accuracy for Epoch31:0.8084059309795362
+Average training loss for Epoch32:0.5814713463187218
+Average accuracy for Epoch32:0.8159359693527222
+Average training loss for Epoch33:0.5625875038564752
+Average accuracy for Epoch33:0.8213807713547978
+Average training loss for Epoch34:0.5479699173651704
+Average accuracy for Epoch34:0.825620960478389
+Average training loss for Epoch35:0.5321271744206411
+Average accuracy for Epoch35:0.830350975514552
+Average training loss for Epoch36:0.5214791345076824
+Average accuracy for Epoch36:0.8329206625802801
+Average training loss for Epoch37:0.5075503969821361
+Average accuracy for Epoch37:0.8370647435888238
+Average training loss for Epoch38:0.490102599588556
+Average accuracy for Epoch38:0.8427896464089735
+Average training loss for Epoch39:0.47005552682307883
+Average accuracy for Epoch39:0.8498085146650262
+A Catesby,
+Will mouse will not bedapt us hoop; sowitised
+Will the next neigh, making your faithful strew our tears:
+Consider, so much is mine own below them,
+And towards London here contemning him,
+And forced to thee tooungling tooks privold;
+And who desire the lowes will break our sprite,
+With curses ready wednes? where's Bohemia, this man
+fullow thinking, as 'Il-shand, to make fumed of me,
+friar Pomers in the royalty of sea-stindire,
+To come hither unwilling open, sound me
+An ancient souls soon mouths to-nich women cried,
+As made this seeming losses tremble woman,
+Like to an Aprorary.
+
+CAMILLO:
+Sir, this is the flesh and footings? In thou hunbrrey?
+God save me, I cannot commend my woe:
+I will wedulft have any outward love?
+Who hope he is wIt took12241.363936185837seconds to train for 40epochs.
+The average loss on the final epoch was:0.47005552682307883

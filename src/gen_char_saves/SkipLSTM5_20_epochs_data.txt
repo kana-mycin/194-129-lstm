@@ -1,0 +1,40 @@
+Average training loss for Epoch0:2.846790426914845
+Average accuracy for Epoch0:0.2483610204472249
+Average training loss for Epoch1:2.2353499362228115
+Average accuracy for Epoch1:0.36237750134063423
+Average training loss for Epoch2:2.0666060469566134
+Average accuracy for Epoch2:0.4023938405951229
+Average training loss for Epoch3:1.9607950232991385
+Average accuracy for Epoch3:0.4277821858541681
+Average training loss for Epoch4:1.8848887444089313
+Average accuracy for Epoch4:0.4476195981879847
+Average training loss for Epoch5:1.8279336647156181
+Average accuracy for Epoch5:0.46352999226762615
+Average training loss for Epoch6:1.7838261316128827
+Average accuracy for Epoch6:0.47516167389416913
+Average training loss for Epoch7:1.7475753133996912
+Average accuracy for Epoch7:0.4843277599696719
+Average training loss for Epoch8:1.7170223194524783
+Average accuracy for Epoch8:0.4922632467719393
+Average training loss for Epoch9:1.6908222622827653
+Average accuracy for Epoch9:0.4987717626291677
+Average training loss for Epoch10:1.6683681156110326
+Average accuracy for Epoch10:0.5046668946059472
+Average training loss for Epoch11:1.648764853357175
+Average accuracy for Epoch11:0.509868494824532
+Average training loss for Epoch12:1.6315808684454052
+Average accuracy for Epoch12:0.514623350164759
+Average training loss for Epoch13:1.6164587222108053
+Average accuracy for Epoch13:0.5188215111100346
+Average training loss for Epoch14:1.6028367138783866
+Average accuracy for Epoch14:0.5223693894820476
+Average training loss for Epoch15:1.59050352611673
+Average accuracy for Epoch15:0.5256013304952087
+Average training loss for Epoch16:1.5793985828347163
+Average accuracy for Epoch16:0.5285818419598658
+Average training loss for Epoch17:1.5693161367276394
+Average accuracy for Epoch17:0.5310827873715567
+Average training loss for Epoch18:1.5601408787823599
+Average accuracy for Epoch18:0.5333382489347677
+Average training loss for Epoch19:1.5517487504066678
+Average accuracy for Epoch19:0.5354308932336098
