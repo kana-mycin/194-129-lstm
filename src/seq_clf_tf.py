@@ -94,9 +94,12 @@ def build_graph(
   batch_size = 16,
   num_steps = 200,
   num_layers = 1,
+  grad_norm = 1,
   lr = 1e-3):
-
+  
+  dropout_is_train = tf.placeholder(tf.bool)
   # reset_graph()
+  keep_prob = tf.cond(dropout_is_train, lambda: tf.constant(0.5), lambda: tf.constant(1.0))
 
   x = inputs
   y = labels
@@ -105,6 +108,8 @@ def build_graph(
 
   word_vectors = tf.contrib.layers.embed_sequence(
     data, vocab_size=vocab_size, embed_dim=EMBEDDING_SIZE)
+
+  word_vectors = tf.nn.dropout(word_vectors, keep_prob=keep_prob)
 
   if cell_type == 'baseline':
     cell = tf.contrib.rnn.LSTMCell(state_size)
@@ -124,24 +129,34 @@ def build_graph(
                                 sequence_length=length)
 
   state = final_state[0]
+  state = tf.nn.dropout(state, keep_prob=keep_prob)
 
   with tf.variable_scope('dense_output'):
     W = tf.get_variable('W', [state_size, num_classes])
     b = tf.get_variable('b', [num_classes], initializer=tf.constant_initializer(0.0))
     logits = tf.matmul(state, W) + b
-  # logits = tf.layers.dense(state, num_classes, activation=None)
 
   predictions = tf.argmax(logits, 1)
 
+  l2_weight = 0.01
+  l2_reg_loss = l2_weight * tf.nn.l2_loss(W)
+
   acc = tf.reduce_mean(tf.cast(tf.equal(y, predictions), tf.float32))
-  total_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y))
-  train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(total_loss, global_step=tf.train.get_global_step())
+  loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y))
+  total_loss = loss + l2_reg_loss
+
+  optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+  gvs = optimizer.compute_gradients(total_loss)
+  capped_gvs = [(tf.clip_by_norm(grad, grad_norm), var) for grad, var in gvs]
+  train_step = optimizer.apply_gradients(capped_gvs, global_step=tf.train.get_global_step())
+
   tf.summary.scalar('loss', total_loss)
   tf.summary.scalar('accuracy', acc)
 
   return dict(
       x = x,
       y = y,
+      dropout_is_train = dropout_is_train,
       init_state = init_state,
       final_state = final_state,
       total_loss = total_loss,
@@ -151,6 +166,12 @@ def build_graph(
       saver = tf.train.Saver()
   )
 
+
+def write_avg_summ(writer, step, lst, name):
+  lst_avg = np.mean(lst)
+  summ = tf.Summary()
+  summ.value.add(tag=name, simple_value=lst_avg)
+  writer.add_summary(summ, step)
 
 
 def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_steps=200, batch_size=16, verbose=True, save=True):
@@ -164,6 +185,22 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     val_writer = tf.summary.FileWriter(save + '/val')
     test_writer = tf.summary.FileWriter(save + '/test')
 
+    def run_eval_and_avg(eval_init_op, summary_writer, num_eval_iters, eval_type="test"):
+      sess.run(eval_init_op)
+      loss_lst = []
+      acc_lst = []
+      for _ in range(num_eval_iters):
+        summary, loss, acc = sess.run(
+                [merged, g['total_loss'], g['accuracy']],
+                feed_dict={dropout_is_train: False})
+        summary_writer.add_summary(summary, step)
+        loss_lst.append(loss)
+        acc_lst.append(acc)
+      write_avg_summ(summary_writer, step, loss_lst, 'loss')
+      write_avg_summ(summary_writer, step, acc_lst, 'accuracy')
+      print("%s loss: %.4f"%(eval_type, np.mean(loss_lst)))
+      print("%s acc: %.4f"%(eval_type, np.mean(acc_lst)))
+      return (np.mean(loss_lst), np.mean(acc_lst))
 
     sess.run(tf.global_variables_initializer())
     training_losses = []
@@ -172,13 +209,16 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
     tot_loss = 0
     t = time.time()
     for step in range(num_steps):
+
+        dropout_is_train = g['dropout_is_train']
         
-        # Record runtime stats every 500th step, starting at 20
-        if step % 500 == 20:
+        # Record runtime stats twice, on step 20 and 1020
+        if step in [20, 1020]:
           run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
           run_metadata = tf.RunMetadata()
           train_summary, loss_value, _, _ = sess.run(
                                 [merged, g['total_loss'], g['final_state'], g['train_step']],
+                                feed_dict={dropout_is_train: True},
                                 options=run_options,
                                 run_metadata=run_metadata)
           train_writer.add_run_metadata(run_metadata, 'step%d'%step)
@@ -186,36 +226,33 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
           tot_loss += loss_value
           training_losses.append(loss_value)
 
-          # Timeline
           tl = timeline.Timeline(run_metadata.step_stats)
           ctf = tl.generate_chrome_trace_format()
           with open(save+'/timeline_%d.json'%step, 'w') as f:
               f.write(ctf)
-
           print('Adding run metadata for step %d'%step)
+
+        # Normal train step
         else:
-            train_summary, loss_value, train_state, _ = sess.run([merged, g['total_loss'], g['final_state'], g['train_step']])
-            train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
-            tot_loss += loss_value
-            training_losses.append(loss_value)
+          train_summary, loss_value, train_state, _ = sess.run(
+                  [merged, g['total_loss'], g['final_state'], g['train_step']],
+                  feed_dict={dropout_is_train: True})
+          train_writer.add_summary(train_summary, step) # Record train stats (loss, accuracy) at each step
+          tot_loss += loss_value
+          training_losses.append(loss_value)
 
 
         # Record validation stats (loss, accuracy) at every 50th step
-        if step % 50 == 0:
-          sess.run(val_init_op)
-          val_summary, val_loss, val_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-          val_writer.add_summary(val_summary, step)
-          print("Val acc: %.4f"%val_acc)
 
-          sess.run(test_init_op)
-          test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-          test_writer.add_summary(test_summary, step)
-          print("Test acc: %.4f"%test_acc)
+        if step % 100 == 0:
+          num_eval_iters = 4
 
-          sess.run(train_init_op)
+          # evaluate on validation and test sets for num_eval_iters batches
+          run_eval_and_avg(val_init_op, val_writer, num_eval_iters, eval_type="val")
+          run_eval_and_avg(test_init_op, test_writer, num_eval_iters, eval_type="test")
+          sess.run(train_init_op) # reset back to train dataset
         
-
-        # Print loss every 100 steps
+        # Print train loss every 100 steps
         if step%100 == 0:
           if step == 0:
             steps_taken = 1
@@ -225,26 +262,19 @@ def train_network(g, train_init_op, val_init_op, test_init_op, data_lens, num_st
           tot_loss=0
           t = time.time()
 
+    print()
+    print("===================================")
+    print("train complete, testing results:")
+    print("===================================")
+    print()
 
-    # initialise iterator with test data
+    # After training, calculate evaluation stats on full test set
     num_test_iters = test_len//batch_size
-    test_loss_tot = 0
-    test_acc_tot = 0
-    sess.run(test_init_op)
-    for _ in range(num_test_iters):
-        test_summary, test_loss, test_acc = sess.run([merged, g['total_loss'], g['accuracy']])
-        test_loss_tot += test_loss
-        test_acc_tot += test_acc
-        test_writer.add_summary(test_summary, step)
-    
-    print("Sum test loss: %.5f\nSum test Accuracy: %.5f"%(test_loss_tot, test_acc))
-    print("Test Loss: %.5f\nTest Accuracy: %.5f"%(test_loss_tot/num_test_iters, test_acc/num_test_iters))
+    test_loss, test_acc = run_eval_and_avg(test_init_op, test_writer, num_test_iters, eval_type="test")
 
     if isinstance(save, str):
       g['saver'].save(sess, save)
     return training_losses, test_loss, test_acc
-
-
 
 
 def main(unused_argv):
@@ -262,11 +292,15 @@ def main(unused_argv):
   VOCAB_SIZE = get_vocab_size(x_train)
   NUM_CLASSES = get_num_classes(y_train)
 
+  data_lens = [len(train[0]), len(val[0]), len(test[0])]
+
+
   print()
   print('DATASET PARAMS\n===============')
   print('Dataset:', FLAGS.dataset)
   print('Total words:', VOCAB_SIZE)
   print('Number of classes:', NUM_CLASSES)
+  print('Number of examples in train/test/val:')
   print()
 
   print('TRAIN PARAMS\n===============')
@@ -303,8 +337,7 @@ def main(unused_argv):
   val_init_op = it.make_initializer(val_ds)
   test_init_op = it.make_initializer(test_ds)
 
-  data_lens = [len(train[0]), len(val[0]), len(test[0])]
-  print(data_lens)
+  
 
   g = build_graph(features, labels, cell_type=FLAGS.cell_type, num_steps=FLAGS.steps,
             batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES, vocab_size=VOCAB_SIZE, state_size=HIDDEN_DIM)
