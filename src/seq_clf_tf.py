@@ -41,7 +41,7 @@ SKIP_LAYERS = [5, 10, 20]
 DEFAULT_DATASET = '20NG'
 DEFAULT_STEPS = 1000
 DEFAULT_L2 = 1e-2
-DEFAULT_DROPOUT = 1e-2
+DEFAULT_DROPOUT = 0.2
 
 # For now, let's chop out anything that's too gigantic from the dataset.
 # Later, we can figure out some kind of wise binning strategy for making more uniform batches.
