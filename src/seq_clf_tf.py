@@ -29,13 +29,14 @@ VOCAB_SIZE = 0
 NUM_CLASSES = 0
 OVERFIT_NUM = 50
 
-EVAL_ITERS_TO_AVG = 4
-STEPS_PER_EVAL = 100
-STEPS_PER_TRAIN_LOSS = 100
+EVAL_ITERS_TO_AVG = 16
+STEPS_PER_EVAL = 200
+STEPS_PER_TRAIN_LOSS = 200
 STEPS_FOR_RUNTIME = [20, 1020]
 
 N_SKIP_LSTM = 10
 K_DEPTH_RRN = 2
+SKIP_LAYERS = [5, 10, 20]
 
 # For now, let's chop out anything that's too gigantic from the dataset.
 # Later, we can figure out some kind of wise binning strategy for making more uniform batches.
@@ -139,6 +140,10 @@ def build_graph(
     cell = SkipLSTMCell(state_size, n_skip=N_SKIP_LSTM)
   elif cell_type == 'rrn':
     cell = RecurrentResidualCell(state_size, k_depth=K_DEPTH_RRN)
+  elif cell_type == 'multiscale':
+    # We could try scaling down the number of parameters to be the same
+    # i.e. (embed_size)^2 = 3 * (smaller_embed_size)^2
+    cell = tf.nn.rnn_cell.MultiRNNCell([SkipLSTMCell(state_size, skip) for skip in SKIP_LAYERS])
   else:
     cell = tf.nn.rnn_cell.LSTMCell(state_size)
 
@@ -151,6 +156,10 @@ def build_graph(
                                 sequence_length=length)
 
   state = final_state[0]
+
+  if (cell_type == 'multiscale'):
+    state = rnn_outputs[:,-1,:] # grab the last output
+
   state = tf.nn.dropout(state, keep_prob=keep_prob)
 
   with tf.variable_scope('dense_output'):
@@ -336,7 +345,7 @@ def main(unused_argv):
 
   train_ds = make_input_ds(train, shuffle=True, repeat=True)
   val_ds = make_input_ds(val, shuffle=True, repeat=True)
-  test_ds = make_input_ds(test, shuffle=False, repeat=True)
+  test_ds = make_input_ds(test, shuffle=True, repeat=True)
 
   it = tf.data.Iterator.from_structure(train_ds.output_types,
                                            train_ds.output_shapes)
@@ -349,8 +358,7 @@ def main(unused_argv):
 
   g = build_graph(features, labels, cell_type=FLAGS.cell_type,
             batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES,
-            vocab_size=VOCAB_SIZE, state_size=FLAGS.hidden, embed_size=FLAGS.hidden,
-            l2_weight=FLAGS.l2)
+            vocab_size=VOCAB_SIZE, state_size=HIDDEN_DIM)
 
   train_losses, test_loss, test_acc = train_network(g, train_init_op, val_init_op, test_init_op, data_lens, 
                                        num_steps=FLAGS.steps, batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
@@ -385,16 +393,6 @@ if __name__ == '__main__':
       '--cell_type',
       default='baseline',
       help='Type of RNN cell to test')
-  parser.add_argument(
-      '--l2',
-      default=1e-1,
-      type=float,
-      help='L2 regularization')
-  parser.add_argument(
-      '--hidden',
-      default=HIDDEN_DIM,
-      type=int,
-      help='hidden state dimension to use')
   FLAGS, unparsed = parser.parse_known_args()
   try:
     os.mkdir(all_models_dir)
