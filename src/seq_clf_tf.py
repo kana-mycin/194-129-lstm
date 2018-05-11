@@ -38,6 +38,11 @@ N_SKIP_LSTM = 10
 K_DEPTH_RRN = 2
 SKIP_LAYERS = [5, 10, 20]
 
+DEFAULT_DATASET = '20NG'
+DEFAULT_STEPS = 1000
+DEFAULT_L2 = 1e-2
+DEFAULT_DROPOUT = 1e-2
+
 # For now, let's chop out anything that's too gigantic from the dataset.
 # Later, we can figure out some kind of wise binning strategy for making more uniform batches.
 max_data_length = 1000
@@ -358,7 +363,8 @@ def main(unused_argv):
 
   g = build_graph(features, labels, cell_type=FLAGS.cell_type,
             batch_size=GLOBAL_BATCH_SIZE, num_classes=NUM_CLASSES,
-            vocab_size=VOCAB_SIZE, state_size=HIDDEN_DIM)
+            vocab_size=VOCAB_SIZE, state_size=FLAGS.hidden, embed_size=FLAGS.hidden,
+            l2_weight=FLAGS.l2, dropout=FLAGS.dropout)
 
   train_losses, test_loss, test_acc = train_network(g, train_init_op, val_init_op, test_init_op, data_lens, 
                                        num_steps=FLAGS.steps, batch_size=GLOBAL_BATCH_SIZE, verbose=True, save=final_model_path)
@@ -386,13 +392,28 @@ if __name__ == '__main__':
       '--steps',
       dest='steps',
       type=int,
-      default=1000,
+      default=DEFAULT_STEPS,
       help='Number of steps to run.')
   parser.add_argument(
       '-c',
       '--cell_type',
       default='baseline',
       help='Type of RNN cell to test')
+  parser.add_argument(
+      '--l2',
+      default=DEFAULT_L2,
+      type=float,
+      help='L2 regularization')
+  parser.add_argument(
+      '--dropout',
+      default=DEFAULT_DROPOUT,
+      type=float,
+      help='L2 regularization')
+  parser.add_argument(
+      '--hidden',
+      default=HIDDEN_DIM,
+      type=int,
+      help='hidden state dimension to use')
   FLAGS, unparsed = parser.parse_known_args()
   try:
     os.mkdir(all_models_dir)
